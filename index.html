@@ -466,6 +466,7 @@ var _currentAudio = null;
 var _speakGen = 0;
 var _wantsPdf = false;
 var _pdfBytes = null;
+var _pdfEncrypted = false;
 var _currentEditSec = null;
 var _origPin = '';
 
@@ -1386,41 +1387,81 @@ function buildPdfContent(){
   return lines2;
 }
 
+function _buildPdfDoc(useEncryption, pin){
+  var opts = {orientation:'portrait',unit:'mm',format:'a4'};
+  if(useEncryption && pin){
+    opts.encryption = {userPassword:pin,ownerPassword:pin+'ltc',userPermissions:['print','copy']};
+  }
+  var doc=new window.jspdf.jsPDF(opts);
+  var plines=buildPdfContent();var margin=20;var y=32;
+  var pageH=doc.internal.pageSize.getHeight();var pageW=doc.internal.pageSize.getWidth();
+  doc.setFillColor(34,57,94);doc.rect(0,0,pageW,22,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text('LTC SPECIALISTS',margin,14);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Long-Term Care Pre-Screening - Confidential',margin,20);
+  doc.setTextColor(30,30,30);doc.setFontSize(10);
+  plines.slice(3).forEach(function(line){
+    if(y>pageH-20){doc.addPage();y=20;}
+    if(!line){y+=4;return;}
+    if(line.startsWith('===')){doc.setDrawColor(133,178,52);doc.line(margin,y,pageW-margin,y);y+=6;return;}
+    if(line.startsWith('---')){doc.setDrawColor(200,200,200);doc.line(margin,y,pageW-margin,y);y+=5;return;}
+    if(line===line.toUpperCase()&&line.length>3&&!line.startsWith('Q:')&&!line.startsWith('A:')){doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(133,178,52);doc.text(line,margin,y);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(30,30,30);y+=7;return;}
+    if(line.startsWith('Q: ')){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(60,60,60);var w=doc.splitTextToSize(line,pageW-margin*2);doc.text(w,margin,y);y+=w.length*5;doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);return;}
+    if(line.startsWith('A: ')){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(133,178,52);var aw=doc.splitTextToSize(line,pageW-margin*2);doc.text(aw,margin,y);y+=aw.length*5+2;doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);return;}
+    doc.setFontSize(9);var w2=doc.splitTextToSize(line,pageW-margin*2);doc.text(w2,margin,y);y+=w2.length*5;
+  });
+  var tp=doc.internal.getNumberOfPages();
+  for(var p=1;p<=tp;p++){doc.setPage(p);doc.setFontSize(8);doc.setTextColor(150,150,150);doc.text('LTC Specialists - Confidential | Page '+p+' of '+tp,margin,pageH-8);}
+  return doc;
+}
+
 function generatePdf(pin,onDone){
+  // Try with encryption first; if it fails (some browsers block it), fall back to unencrypted
   try{
-    var doc=new window.jspdf.jsPDF({
-      orientation:'portrait',unit:'mm',format:'a4',
-      encryption:{userPassword:pin,ownerPassword:pin+'ltc',userPermissions:['print','copy']}
-    });
-    var plines=buildPdfContent();var margin=20;var y=32;
-    var pageH=doc.internal.pageSize.getHeight();var pageW=doc.internal.pageSize.getWidth();
-    doc.setFillColor(34,57,94);doc.rect(0,0,pageW,22,'F');
-    doc.setTextColor(255,255,255);doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text('LTC SPECIALISTS',margin,14);
-    doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Long-Term Care Pre-Screening - Confidential',margin,20);
-    doc.setTextColor(30,30,30);doc.setFontSize(10);
-    plines.slice(3).forEach(function(line){
-      if(y>pageH-20){doc.addPage();y=20;}
-      if(!line){y+=4;return;}
-      if(line.startsWith('===')){doc.setDrawColor(133,178,52);doc.line(margin,y,pageW-margin,y);y+=6;return;}
-      if(line.startsWith('---')){doc.setDrawColor(200,200,200);doc.line(margin,y,pageW-margin,y);y+=5;return;}
-      if(line===line.toUpperCase()&&line.length>3&&!line.startsWith('Q:')&&!line.startsWith('A:')){doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(133,178,52);doc.text(line,margin,y);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(30,30,30);y+=7;return;}
-      if(line.startsWith('Q: ')){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(60,60,60);var w=doc.splitTextToSize(line,pageW-margin*2);doc.text(w,margin,y);y+=w.length*5;doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);return;}
-      if(line.startsWith('A: ')){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(133,178,52);var aw=doc.splitTextToSize(line,pageW-margin*2);doc.text(aw,margin,y);y+=aw.length*5+2;doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);return;}
-      doc.setFontSize(9);var w2=doc.splitTextToSize(line,pageW-margin*2);doc.text(w2,margin,y);y+=w2.length*5;
-    });
-    var tp=doc.internal.getNumberOfPages();
-    for(var p=1;p<=tp;p++){doc.setPage(p);doc.setFontSize(8);doc.setTextColor(150,150,150);doc.text('LTC Specialists - Confidential | Page '+p+' of '+tp,margin,pageH-8);}
-    _pdfBytes=doc.output('arraybuffer');onDone(true);
-  }catch(err){console.warn('PDF error:',err);onDone(false);}
+    var doc=_buildPdfDoc(true, pin);
+    var bytes=doc.output('arraybuffer');
+    if(!bytes||bytes.byteLength<100) throw new Error('Empty PDF');
+    _pdfBytes=bytes;
+    _pdfEncrypted=true;
+    onDone(true);
+  }catch(err){
+    console.warn('Encrypted PDF failed, trying unencrypted:',err);
+    try{
+      var doc2=_buildPdfDoc(false, null);
+      var bytes2=doc2.output('arraybuffer');
+      _pdfBytes=bytes2;
+      _pdfEncrypted=false;
+      onDone(true);
+    }catch(err2){
+      console.warn('PDF generation failed entirely:',err2);
+      _pdfBytes=null;
+      onDone(false);
+    }
+  }
 }
 
 function downloadPdf(){
-  if(!_pdfBytes){alert('PDF not ready. Please submit first.');return;}
+  if(!_pdfBytes){
+    // Try regenerating if it somehow got lost
+    if(_origPin){
+      generatePdf(_origPin,function(ok){
+        if(ok&&_pdfBytes) downloadPdf();
+        else alert('Sorry, there was a problem generating your PDF. Your responses were already submitted to your agent.');
+      });
+    } else {
+      alert('Sorry, there was a problem generating your PDF. Your responses were already submitted to your agent.');
+    }
+    return;
+  }
   var blob=new Blob([_pdfBytes],{type:'application/pdf'});
   var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;
   var fn7=S.introFirstName||'client';
   a.download='LTC-PreScreening-'+fn7+'-'+new Date().toLocaleDateString('en-US').replace(/\//g,'-')+'.pdf';
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  if(!_pdfEncrypted){
+    setTimeout(function(){
+      alert('Note: Your PDF was generated without password protection (your browser does not support PDF encryption). Please keep it secure.');
+    },500);
+  }
 }
 
 // ─── Utility helpers ──────────────────────────────────────────────────────────
