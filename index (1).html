@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Long-Term Care Pre-Screening Medical Questionnaire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --navy:   #22395E;
+      --green:  #85B234;
+      --green2: #6a9228;
+      --gpale:  #f0f7e0;
+      --red:    #8b2020;
+      --rpale:  #fdf0f0;
+      --ink:    #1c1c1e;
+      --ink2:   #3a3a42;
+      --ink3:   #6e6e78;
+      --bg:     #f4f2ee;
+      --bg2:    #ece9e2;
+      --white:  #ffffff;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 2px 16px rgba(0,0,0,.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,.13);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+    .logo-bar { background: var(--navy); border-radius: var(--radius); padding: 24px 20px; text-align: center; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .logo-bar img { height: 120px; width: auto; max-width: 90%; object-fit: contain; display: block; margin: 0 auto; }
+    .eyebrow { text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 2.5px; color: var(--green); text-transform: uppercase; margin-bottom: 24px; }
+    .eyebrow-line { width: 36px; height: 2px; background: var(--green); margin: 6px auto 0; border-radius: 2px; }
+    .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .iv-panel { display: none; align-items: center; gap: 14px; padding: 14px 20px; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 16px; }
+    .iv-icon { width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--green); background: var(--gpale); display: flex; align-items: center; justify-content: center; font-size: 22px; transition: all .3s; flex-shrink: 0; }
+    .iv-icon.speaking { background: var(--green); animation: pulse 1.2s infinite; }
+    .iv-bars { display: flex; gap: 3px; align-items: flex-end; height: 20px; }
+    .iv-bars span { width: 4px; background: var(--green); border-radius: 2px; height: 6px; }
+    .iv-bars.on span:nth-child(1) { animation: bar 0.8s ease-in-out infinite; }
+    .iv-bars.on span:nth-child(2) { animation: bar 0.8s ease-in-out infinite .15s; }
+    .iv-bars.on span:nth-child(3) { animation: bar 0.8s ease-in-out infinite .3s; }
+    .iv-bars.on span:nth-child(4) { animation: bar 0.8s ease-in-out infinite .45s; }
+    .iv-bars.on span:nth-child(5) { animation: bar 0.8s ease-in-out infinite .6s; }
+    .iv-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--ink3); text-transform: uppercase; margin-bottom: 6px; }
+    .mute-btn { padding: 8px 16px; border-radius: 8px; border: 1.5px solid var(--green); background: var(--gpale); color: var(--green); font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-left: auto; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(133,178,52,.4)} 50%{box-shadow:0 0 0 8px rgba(133,178,52,0)} }
+    @keyframes bar { 0%,100%{height:6px} 50%{height:18px} }
+    .prog-wrap { padding: 12px 20px 0; }
+    .prog-track { height: 14px; background: var(--bg2); border-radius: 7px; position: relative; overflow: visible; }
+    .prog-fill { height: 100%; background: linear-gradient(90deg, #85B234, #4a7a1a); border-radius: 7px; transition: width .7s cubic-bezier(.4,0,.2,1); min-width: 0; }
+    .prog-milestone { position: absolute; top: -3px; height: 20px; width: 3px; background: white; border-radius: 2px; opacity: 0.7; z-index: 2; }
+    .prog-milestone.reached { opacity: 1; }
+    .prog-milestone-dot { position: absolute; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--bg2); border: 2px solid #ccc; transform: translateX(-50%); z-index: 3; transition: all .3s; }
+    .prog-milestone-dot.reached { background: var(--green); border-color: var(--green2); }
+    .prog-meta { display: flex; justify-content: space-between; padding: 6px 0 4px; font-size: 13px; color: var(--ink3); font-weight: 500; }
+    .prog-pct { font-weight: 700; color: var(--green2); }
+    @keyframes milestone-pop { 0%{opacity:0;transform:translate(-50%,-60%) scale(0.7)} 40%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+    @keyframes milestone-fade { 0%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
+    .milestone-badge { display:none; position:fixed; top:40%; left:50%; transform:translate(-50%,-50%); background:var(--green); color:#fff; font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; padding:18px 36px; border-radius:50px; box-shadow:0 8px 40px rgba(133,178,52,.5); z-index:9999; text-align:center; }
+    .sec-strip { padding: 8px 20px 0; }
+    .sec-badge { display: inline-block; background: var(--gpale); color: var(--green2); font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; }
+    .q-area { padding: 24px 28px 8px; }
+    .q-text { font-family: 'Playfair Display', serif; font-size: clamp(20px, 3vw, 30px); font-weight: 400; line-height: 1.35; color: var(--ink); margin-bottom: 4px; }
+    .val-err { display: none; font-size: 14px; font-weight: 600; color: var(--red); margin: 8px 0; }
+    .val-err.show { display: block; }
+    .a-area { padding: 12px 28px 28px; }
+    .inp { width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 17px; color: var(--ink); background: var(--bg); outline: none; transition: border-color .2s; }
+    .inp:focus { border-color: var(--green); background: var(--white); }
+    .inp.invalid { border-color: var(--red); }
+    .inp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .inp-group { display: flex; flex-direction: column; gap: 6px; }
+    .inp-label { font-size: 14px; font-weight: 600; color: var(--ink2); }
+    textarea.inp { min-height: 110px; resize: vertical; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; }
+    textarea.inp.tall { min-height: 160px; }
+    .cont-btn { align-self: flex-start; padding: 14px 28px; background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; transition: all .18s; margin-top: 10px; }
+    .cont-btn:hover { background: var(--green2); transform: translateY(-1px); }
+    .back-btn { padding: 10px 20px; background: transparent; border: 1.5px solid #ccc; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 15px; color: var(--ink3); cursor: pointer; margin-top: 8px; display: block; width: 100%; text-align: center; }
+    .back-btn:hover { border-color: var(--ink3); color: var(--ink); }
+    .start-btn { display: block; width: 100%; padding: 16px 32px; background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer; transition: all .2s; margin-top: 12px; }
+    .start-btn:hover { background: var(--green2); transform: translateY(-1px); }
+    .start-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .yn-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+    .yn-btn { padding: 16px; border-radius: var(--radius-sm); border: 2px solid #e0e0e0; background: var(--white); font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer; transition: all .18s; }
+    .yn-btn.yes { color: var(--green); }
+    .yn-btn.yes:hover, .yn-btn.yes.sel { background: var(--gpale); border-color: var(--green); }
+    .yn-btn.no { color: var(--red); }
+    .yn-btn.no:hover, .yn-btn.no.sel { background: var(--rpale); border-color: var(--red); }
+    .yes-detail { display: none; margin-top: 12px; padding: 16px; background: var(--gpale); border-radius: var(--radius-sm); border: 1.5px solid var(--green); }
+    .yes-detail.show { display: block; }
+    .yes-detail-lbl { font-size: 14px; font-weight: 600; color: var(--green2); margin-bottom: 8px; }
+    .yes-cont-btn { padding: 10px 20px; background: var(--green); color: #fff; border: none; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    .choice-wrap { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+    .choice-btn { padding: 14px 18px; border-radius: var(--radius-sm); border: 2px solid #e0e0e0; background: var(--white); font-family: 'Outfit', sans-serif; font-size: 18px; color: var(--ink); cursor: pointer; text-align: left; transition: all .18s; }
+    .choice-btn:hover, .choice-btn.sel { border-color: var(--green); background: var(--gpale); color: var(--green); }
+    .section-bridge { text-align: center; padding: 32px 28px; }
+    .section-bridge h3 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; color: var(--navy); margin-bottom: 8px; }
+    .section-bridge p { font-size: 16px; color: var(--ink2); margin-bottom: 20px; }
+    .med-card { background: var(--bg); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; border: 1.5px solid #e0e0e0; position: relative; }
+    .med-card-title { font-size: 15px; font-weight: 700; color: var(--green2); margin-bottom: 12px; }
+    .med-del { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; padding: 4px; }
+    .add-med-btn { width: 100%; padding: 12px; border: 2px dashed var(--green); background: var(--gpale); color: var(--green2); border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px; }
+    .intro { padding: 36px 28px; }
+    .intro h2 { font-family: 'Playfair Display', serif; font-size: clamp(28px, 4vw, 40px); font-weight: 400; margin-bottom: 16px; }
+    .intro .sub { font-size: 17px; line-height: 1.8; color: var(--ink2); margin-bottom: 24px; }
+    .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .info-card { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 12px; text-align: center; }
+    .ic-icon { font-size: 22px; margin-bottom: 6px; }
+    .ic-lbl { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--ink3); margin-bottom: 4px; }
+    .ic-val { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .priv { background: var(--gpale); border-radius: var(--radius-sm); padding: 14px 16px; font-size: 14px; color: var(--ink2); line-height: 1.6; display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; }
+    .welcome-screen { padding: 48px 28px; text-align: center; }
+    .welcome-screen h2 { font-family: 'Playfair Display', serif; font-size: clamp(22px, 4vw, 32px); font-weight: 400; margin-bottom: 14px; }
+    .sum-screen { display: none; padding: 0; }
+    .sum-screen.show { display: block; }
+    .sum-top { text-align: center; padding: 32px 28px 20px; }
+    .sum-top h2 { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 400; margin-bottom: 8px; }
+    .cli-banner { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--gpale); border-top: 1.5px solid var(--green); border-bottom: 1.5px solid var(--green); padding: 12px 28px; gap: 8px; }
+    .cli-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--green2); }
+    .cli-val { font-size: 15px; font-weight: 600; color: var(--ink); margin-top: 2px; }
+    .sum-sec { margin: 0 28px 16px; border: 1.5px solid #e8e8e8; border-radius: var(--radius-sm); overflow: hidden; }
+    .sum-sec-hdr { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-bottom: 1.5px solid #e8e8e8; }
+    .sum-sec-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--ink2); }
+    .edit-btn { padding: 5px 14px; background: var(--gpale); color: var(--green2); border: 1.5px solid var(--green); border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .sum-row { display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #f0f0f0; gap: 16px; }
+    .sum-row:last-child { border-bottom: none; }
+    .sum-q { font-size: 14px; color: var(--ink2); flex: 1; line-height: 1.5; }
+    .sum-a { font-size: 15px; font-weight: 600; color: var(--ink); text-align: right; white-space: pre-line; }
+    .sum-ts { text-align: center; padding: 12px 28px; font-size: 13px; color: var(--ink3); }
+    .act-row { display: flex; gap: 12px; justify-content: center; padding: 20px 28px 28px; flex-wrap: wrap; }
+    .act-btn { padding: 14px 28px; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; transition: all .18s; }
+    .act-btn.primary { background: var(--green); color: #fff; border: none; }
+    .act-btn.primary:hover { background: var(--green2); }
+    .act-btn.ghost { background: transparent; color: var(--ink2); border: 1.5px solid #ccc; }
+    .edit-screen { display: none; padding: 28px; }
+    .edit-screen.show { display: block; }
+    .edit-back { background: none; border: none; color: var(--green); font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 20px; padding: 0; }
+    .edit-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400; margin-bottom: 20px; }
+    .edit-field { margin-bottom: 20px; }
+    .save-edit-btn { padding: 14px 32px; background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; }
+    .submit-screen { display: none; padding: 36px 28px; }
+    .submit-screen.show { display: block; }
+    .submit-screen h2 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; margin-bottom: 10px; }
+    .submit-opts { background: var(--bg); border-radius: var(--radius-sm); padding: 20px; margin: 16px 0; }
+    .submit-opts-title { font-size: 15px; font-weight: 600; color: var(--ink2); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ty-screen { display: none; text-align: center; padding: 48px 28px; }
+    .ty-screen.show { display: block; }
+    @media(max-width:600px) {
+      .inp-grid { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: repeat(2,1fr); }
+      .cli-banner { grid-template-columns: repeat(2,1fr); }
+      .yn-wrap { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-bar">
+    <img src="data:image/png;base64,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" alt="LTC Specialists">
+  </div>
+  <div class="eyebrow">Long-Term Care Insurance<div class="eyebrow-line"></div></div>
+
+  <div class="iv-panel" id="ivPanel">
+    <div class="iv-icon" id="ivIcon">&#127908;</div>
+    <div>
+      <div class="iv-label">AI Interviewer</div>
+      <div class="iv-bars" id="ivBars"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <button class="mute-btn" id="muteBtn" onclick="toggleMute()">Mute Voice</button>
+  </div>
+
+  <div class="card" id="mainCard">
+
+    <!-- WELCOME SCREEN -->
+    <div class="welcome-screen" id="welcomeScreen">
+      <h2>Welcome to the Long-Term Care Pre-Screening Medical Questionnaire</h2>
+      <p style="font-size:17px;color:var(--ink2);margin-bottom:28px">Please enter your name to get started.</p>
+      <div style="max-width:400px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+        <input type="text" class="inp" id="introFirstName" placeholder="First name" style="font-size:19px;padding:16px;text-align:center" onkeydown="if(event.key==='Enter')document.getElementById('introLastName').focus()" oninput="document.getElementById('nameErr').style.display='none'">
+        <input type="text" class="inp" id="introLastName" placeholder="Last name" style="font-size:19px;padding:16px;text-align:center" onkeydown="if(event.key==='Enter')clickNext()" oninput="document.getElementById('nameErr').style.display='none'">
+        <div id="nameErr" style="display:none;color:var(--red);font-size:14px;font-weight:600;text-align:center">Please enter your first and last name.</div>
+        <button class="start-btn" onclick="clickNext()">Next</button>
+      </div>
+    </div>
+
+    <!-- INTRO SCREEN -->
+    <div class="intro" id="introScreen" style="display:none">
+      <h2>Hello, <span id="greetName"></span>!</h2>
+      <p class="sub">This is a confidential medical history pre-screening interview &mdash; <strong>not an insurance application</strong>. We need to learn about your health history so we can determine your insurability for long-term care coverage and identify the best options for your needs. Please answer every question as accurately and completely as possible, and think specifically about what is likely in your medical records.</p>
+      <div class="info-grid">
+        <div class="info-card"><div class="ic-icon">&#9201;</div><div class="ic-lbl">Duration</div><div class="ic-val">15&ndash;20 min</div></div>
+        <div class="info-card"><div class="ic-icon">&#128203;</div><div class="ic-lbl">Sections</div><div class="ic-val">12 topics</div></div>
+        <div class="info-card"><div class="ic-icon">&#9999;</div><div class="ic-lbl">Editable</div><div class="ic-val">Review before submit</div></div>
+        <div class="info-card"><div class="ic-icon">&#128274;</div><div class="ic-lbl">Privacy</div><div class="ic-val">Confidential</div></div>
+      </div>
+      <div class="priv">
+        <span style="font-size:18px;flex-shrink:0">&#128274;</span>
+        <span>Your responses are confidential and used solely to evaluate your long-term care coverage options. By proceeding you consent to your completed questionnaire being sent securely to your agent.</span>
+      </div>
+      <button class="start-btn" onclick="startInterview()">Begin Pre-Screening</button>
+    </div>
+
+    <!-- INTERVIEW SCREEN -->
+    <div id="ivScreen" style="display:none">
+      <div class="prog-wrap">
+        <div class="prog-track">
+          <div class="prog-fill" id="progFill" style="width:0%"></div>
+          <div class="prog-milestone" style="left:25%"><div class="prog-milestone-dot" id="msDot25" style="left:0"></div></div>
+          <div class="prog-milestone" style="left:50%"><div class="prog-milestone-dot" id="msDot50" style="left:0"></div></div>
+          <div class="prog-milestone" style="left:75%"><div class="prog-milestone-dot" id="msDot75" style="left:0"></div></div>
+        </div>
+        <div class="prog-meta"><span id="progLbl">Step 1</span><span id="progPct" class="prog-pct">0% Complete</span></div>
+      </div>
+      <div class="milestone-badge" id="milestoneBadge"></div>
+      <div class="sec-strip"><div class="sec-badge" id="secBadge">Basic Information</div></div>
+      <div class="q-area">
+        <div class="q-text" id="qText"></div>
+        <div class="val-err" id="valErr">Please provide an answer before continuing.</div>
+      </div>
+      <div class="a-area" id="aArea"></div>
+    </div>
+
+    <!-- SUMMARY SCREEN -->
+    <div class="sum-screen" id="sumScreen">
+      <div class="sum-top">
+        <div style="font-size:48px;margin-bottom:10px">&#128203;</div>
+        <h2>Please Review Your Responses</h2>
+        <p style="font-size:16px;color:var(--ink2)">Click <strong>Edit</strong> on any section to make changes.<br>When correct, scroll down and click <strong>Proceed to Submit</strong>.</p>
+      </div>
+      <div class="cli-banner" id="cliBanner"></div>
+      <div id="sumSections"></div>
+      <div class="sum-ts" id="sumTs"></div>
+      <div class="act-row">
+        <button class="act-btn primary" onclick="goToSubmit()">Proceed to Submit</button>
+        <button class="act-btn ghost" onclick="editResponses()">Edit Responses</button>
+      </div>
+    </div>
+
+    <!-- EDIT SCREEN -->
+    <div class="edit-screen" id="editScreen">
+      <button class="edit-back" onclick="backToSummary()">&#8592; Back to Summary</button>
+      <div class="edit-title" id="editTitle">Edit Section</div>
+      <div id="editFields"></div>
+      <button class="save-edit-btn" onclick="saveEdit()">Save Changes</button>
+    </div>
+
+    <!-- SUBMIT SCREEN -->
+    <div class="submit-screen" id="submitScreen">
+      <h2>Submit Your Pre-Screening</h2>
+      <p style="color:var(--ink2);margin-bottom:16px">Your responses are ready to be sent to your agent.</p>
+      <div class="submit-opts">
+        <div class="submit-opts-title">Would you like a password-protected PDF copy of your responses?</div>
+        <div class="yn-wrap" style="margin-bottom:14px">
+          <button class="yn-btn yes" id="pdfYesBtn" onclick="handlePdfChoice(true)">Yes, create my PDF</button>
+          <button class="yn-btn no" id="pdfNoBtn" onclick="handlePdfChoice(false)">No thanks</button>
+        </div>
+        <div id="pdfOptsWrap" style="display:none">
+          <div class="inp-group" style="margin-bottom:12px">
+            <label class="inp-label">Your Email <span style="font-weight:400;color:var(--ink3)">(confirmation receipt)</span></label>
+            <input type="email" class="inp" id="clientEmail" placeholder="your@email.com">
+          </div>
+          <div class="inp-group" style="margin-bottom:8px">
+            <label class="inp-label">Create a 4-digit PIN <span style="font-weight:400;color:var(--ink3)">(to open your PDF)</span></label>
+            <input type="password" class="inp" id="clientPin" placeholder="****" inputmode="numeric" maxlength="4" style="font-size:22px;letter-spacing:8px;text-align:center;max-width:160px" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+          </div>
+          <p style="font-size:13px;color:var(--ink3)">&#128274; <strong>Write down your PIN</strong> &mdash; your PDF will be locked and will require this PIN to open.</p>
+        </div>
+        <div id="noEmailWrap" style="display:none">
+          <div class="inp-group">
+            <label class="inp-label">Your Email <span style="font-weight:400;color:var(--ink3)">(optional &mdash; confirmation only)</span></label>
+            <input type="email" class="inp" id="clientEmailNopdf" placeholder="your@email.com">
+          </div>
+        </div>
+      </div>
+      <div id="submitErr" style="display:none;color:var(--red);font-size:14px;font-weight:600;margin-bottom:10px"></div>
+      <button class="start-btn" id="submitBtn" onclick="submitInterview()">Submit to Agent</button>
+      <button class="back-btn" onclick="backFromSubmit()">&#8592; Back to Summary</button>
+    </div>
+
+    <!-- THANK YOU SCREEN -->
+    <div class="ty-screen" id="tyScreen">
+      <div style="font-size:72px;margin-bottom:16px">&#x2705;</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:36px;font-weight:400;color:var(--green);margin-bottom:12px">Questionnaire Submitted!</h2>
+      <p style="font-size:17px;color:var(--ink2);max-width:480px;margin:0 auto 20px;line-height:1.7">Your pre-screening responses have been <strong>successfully submitted</strong> to your agent.</p>
+      <div id="tyEmailConfirm" style="display:none;background:var(--gpale);border:1.5px solid var(--green);border-radius:12px;padding:14px 20px;max-width:460px;margin:0 auto 20px;font-size:15px;color:var(--green2)">
+        A confirmation has been sent to <strong id="tyEmailAddr"></strong>
+      </div>
+      <div id="tyPdfWrap" style="display:none;max-width:460px;margin:0 auto 24px">
+        <div style="background:var(--gpale);border:1.5px solid var(--green);border-radius:12px;padding:20px">
+          <p style="font-size:16px;font-weight:600;color:var(--green2);margin-bottom:10px">&#128274; Your PDF is ready &mdash; click to download</p>
+          <p style="font-size:14px;color:var(--ink2);margin-bottom:14px">Use your <strong>4-digit PIN</strong> to open it.</p>
+          <button onclick="downloadPdf()" class="start-btn" style="max-width:280px;margin:0 auto;font-size:16px">&#11015; Download My PDF</button>
+        </div>
+      </div>
+      <div style="background:var(--bg);border-radius:12px;padding:20px;max-width:460px;margin:0 auto;text-align:left;font-size:16px;color:var(--ink2);line-height:1.8">
+        <strong style="display:block;margin-bottom:6px;color:var(--ink)">What happens next?</strong>
+        Your agent will review your responses and get back to you shortly with long-term care coverage options and recommendations.
+      </div>
+      <p style="margin-top:24px;font-size:14px;color:var(--ink3)">You may now close this page.</p>
+    </div>
+
+  </div>
+</div>
+<script charset="utf-8">
+emailjs.init('YnLIAi0X7M9pYr2-Y');
+
+var SECTIONS = [
+  {id:'basic',        label:'Basic Information'},
+  {id:'meds',         label:'Medication History'},
+  {id:'musculo',      label:'Musculoskeletal / Orthopedic Health'},
+  {id:'endocrine',    label:'Endocrine / Metabolic Health'},
+  {id:'cardio',       label:'Cardiovascular Health'},
+  {id:'respiratory',  label:'Respiratory / Pulmonary Health'},
+  {id:'neuro',        label:'Neurological Health'},
+  {id:'mental',       label:'Mental Health & Substance Use'},
+  {id:'cancer',       label:'Cancer & Related Conditions'},
+  {id:'autoimmune',   label:'Autoimmune / Chronic Conditions'},
+  {id:'lab',          label:'Lab & Organ Function'},
+  {id:'hospital',     label:'Hospitalizations, Surgeries & Disability'},
+  {id:'mobility',     label:'Mobility & Function'},
+  {id:'family',       label:'Family History'},
+  {id:'other',        label:'Other Medical Conditions'},
+];
+
+var Q = [
+  // ── Basic Information ──────────────────────────────────────────────
+  {id:'p_name',     sec:'basic', type:'name',   text:'What is your name?',                                    speak:'What is your name?',                                                                    next:function(){ return 'p_dob'; }},
+  {id:'p_dob',      sec:'basic', type:'text',   text:'What is your date of birth?',                           speak:'What is your date of birth?',                                                           ph:'MM/DD/YYYY', req:true, dob:true, next:function(){ return 'p_height'; }},
+  {id:'p_height',   sec:'basic', type:'height', text:'What is your height?',                                  speak:'What is your height?',                                                                  req:true, next:function(){ return 'p_weight'; }},
+  {id:'p_weight',   sec:'basic', type:'text',   text:'What is your current weight?',                          speak:'What is your current weight?',                                                          ph:'e.g., 175 lbs', req:true, next:function(){ return 'p_weight_change'; }},
+  // NEW: weight change question after weight
+  {id:'p_weight_change', sec:'basic', type:'yn', text:'Has your weight changed by more than 20 lbs in the last 12 months?', speak:'Has your weight changed by more than 20 pounds in the last 12 months?', noDetail:true, next:function(a){ return a==='Yes'?'p_weight_change_detail':'p_tobacco'; }},
+  {id:'p_weight_change_detail', sec:'basic', type:'text', text:'Please describe the weight change.', speak:'Please describe the weight change, including how much and whether it was a gain or loss.', ph:'e.g., Lost 25 lbs over 6 months, intentional diet change', req:true, next:function(){ return 'p_tobacco'; }},
+  // FIX: tobacco noDetail=true so clicking Yes goes directly to detail step
+  {id:'p_tobacco',  sec:'basic', type:'yn',     text:'Have you used any tobacco products?',                   speak:'Have you used any tobacco products?',                                                    noDetail:true, next:function(a){ return a==='Yes'?'p_tobacco_detail':'bridge_meds'; }},
+  {id:'p_tobacco_detail', sec:'basic', type:'text', text:'Please describe your tobacco use.',                 speak:'Please describe your tobacco use, including the type of product and how much per day.',  ph:'e.g., Cigarettes, 1 pack/day for 10 years', req:true, next:function(){ return 'bridge_meds'; }},
+
+  // ── Medications ────────────────────────────────────────────────────
+  {id:'bridge_meds', sec:'meds', type:'section', text:'Medication History',                                   speak:"Now let's go over your medication history.",                                             next:function(){ return 'meds_yn'; }},
+  {id:'meds_yn',    sec:'meds', type:'yn',       text:'Are you currently taking any prescription medications?', speak:'Are you currently taking any prescription medications?',                                noDetail:true, next:function(a){ return a==='Yes'?'meds_list':'bridge_musculo'; }},
+  {id:'meds_list',  sec:'meds', type:'medications', text:'Please list all medications taken in the last 12 months.', speak:'Please provide details for each medication you have taken in the last 12 months.', next:function(){ return 'bridge_musculo'; }},
+
+  // ── Musculoskeletal ────────────────────────────────────────────────
+  {id:'bridge_musculo', sec:'musculo', type:'section', text:'Musculoskeletal / Orthopedic Health',             speak:'Now some questions about your musculoskeletal and orthopedic health.',                    next:function(){ return 'ms_ortho'; }},
+  {id:'ms_ortho',   sec:'musculo', type:'yn',    text:'Do you have any orthopedic issues such as back, neck, knees, or hips?', speak:'Do you have any orthopedic issues, such as problems with your back, neck, knees, or hips?', next:function(a){ return a==='Yes'?'ms_injections':'ms_arthritis'; }},
+  // FIX 4: injections and pain meds now ask for detail when Yes
+  {id:'ms_injections', sec:'musculo', type:'yn', text:'Have you received cortisone or other injections in the past 6 months?', speak:'Have you received cortisone or other injections in the past 6 months?', next:function(){ return 'ms_pain_meds'; }},
+  {id:'ms_pain_meds',  sec:'musculo', type:'yn', text:'Do you require pain medication for your orthopedic condition?',        speak:'Do you require pain medication for your orthopedic condition?',               next:function(){ return 'ms_pt'; }},
+  {id:'ms_pt',         sec:'musculo', type:'yn', text:'Have you needed physical therapy for your orthopedic condition?',       speak:'Have you needed physical therapy for your orthopedic condition?',               noDetail:true, next:function(a){ return a==='Yes'?'ms_pt_for':'ms_arthritis'; }},
+  {id:'ms_pt_for',  sec:'musculo', type:'text',  text:'What was the physical therapy for?',                                      speak:'What was the physical therapy for?',                                             ph:'e.g., Knee rehabilitation, lower back pain', req:true, next:function(){ return 'ms_pt_date'; }},
+  {id:'ms_pt_date', sec:'musculo', type:'text',  text:'What was the date of your last physical therapy appointment?',            speak:'What was the date of your last physical therapy appointment?',                  ph:'e.g., March 2025', req:true, next:function(){ return 'ms_arthritis'; }},
+  // FIX 5: arthritis noDetail=true; if yes go to type selector only (no extra text box), then straight to ms_osteo
+  {id:'ms_arthritis',  sec:'musculo', type:'yn', text:'Have you been diagnosed with any form of arthritis?',                   speak:'Have you been diagnosed with any form of arthritis?',                            noDetail:true, next:function(a){ return a==='Yes'?'ms_arthritis_type':'ms_osteo'; }},
+  {id:'ms_arthritis_type', sec:'musculo', type:'multicheck', text:'Please select all types of arthritis that apply.', speak:'Please select all types of arthritis that apply. You may select more than one.', opts:['Osteoarthritis','Rheumatoid Arthritis','Other'], next:function(a){ return (a&&a.indexOf('Other')>=0)?'ms_arthritis_other':'ms_osteo'; }},
+  {id:'ms_arthritis_other', sec:'musculo', type:'text', text:'Please describe your arthritis condition.', speak:'Please describe your arthritis condition in more detail.', ph:'e.g., Diagnosed 2018, managed with Methotrexate', req:true, next:function(){ return 'ms_osteo'; }},
+  {id:'ms_osteo',      sec:'musculo', type:'yn', text:'Do you have a history of osteoporosis?',                                speak:'Do you have a history of osteoporosis?',                                         next:function(){ return 'bridge_endocrine'; }},
+
+  // ── Endocrine ──────────────────────────────────────────────────────
+  {id:'bridge_endocrine', sec:'endocrine', type:'section', text:'Endocrine / Metabolic Health',               speak:'Now some questions about your endocrine and metabolic health.',                          next:function(){ return 'en_diabetes'; }},
+  // FIX 6: diabetes expands into type / dx date / meds flow
+  {id:'en_diabetes',        sec:'endocrine', type:'yn',        text:'Have you been diagnosed with diabetes?',                                speak:'Have you been diagnosed with diabetes?',                                                 noDetail:true, next:function(a){ return a==='Yes'?'en_diabetes_type':'en_bp'; }},
+  {id:'en_diabetes_type',   sec:'endocrine', type:'choice',    text:'Which type of diabetes do you have?',                                   speak:'Which type of diabetes do you have?',                                                    opts:['Type 1','Type 2','Other'], next:function(a){ return a==='Other'?'en_diabetes_other':'en_diabetes_dx'; }},
+  {id:'en_diabetes_other',  sec:'endocrine', type:'text',      text:'Please describe your diabetes diagnosis.',                              speak:'Please describe your diabetes diagnosis.',                                               ph:'e.g., LADA (Latent Autoimmune Diabetes in Adults)', req:true, next:function(){ return 'en_diabetes_dx'; }},
+  {id:'en_diabetes_dx',     sec:'endocrine', type:'text',      text:'Approximately when were you diagnosed with diabetes?',                  speak:'Approximately when were you diagnosed with diabetes?',                                   ph:'e.g., January 2018', req:true, next:function(){ return 'en_diabetes_meds'; }},
+  {id:'en_diabetes_meds',   sec:'endocrine', type:'yn',        text:'Do you take medication or insulin for your diabetes?',                  speak:'Do you take medication or insulin for your diabetes?',                                   noDetail:true, next:function(a){ return a==='Yes'?'en_diabetes_meds_type':'en_a1c'; }},
+  {id:'en_diabetes_meds_type', sec:'endocrine', type:'multicheck', text:'Please select all that apply for your diabetes treatment.',         speak:'Please select all that apply for your diabetes treatment.',                             opts:['Oral Medication','Insulin','Both'], next:function(){ return 'en_a1c'; }},
+  {id:'en_a1c',             sec:'endocrine', type:'text',      text:'Please provide your most recent A1C count and the date it was taken.',  speak:'Please provide your most recent A1C count and the date it was taken.',                   ph:'e.g., A1C 6.8, January 2025', req:true, next:function(){ return 'en_bp'; }},
+  // FIX 7: high BP expands into reading / meds / med change flow
+  {id:'en_bp',              sec:'endocrine', type:'choice',    text:'Do you have a history of high blood pressure?',                         speak:'Do you have a history of high blood pressure?',                                          opts:['Yes','No','Not Sure'], next:function(a){ return a==='Yes'?'en_bp_reading':'bridge_cardio'; }},
+  {id:'en_bp_reading',      sec:'endocrine', type:'text',      text:'What was your most recent blood pressure reading?',                     speak:'What was your most recent blood pressure reading?',                                      ph:'e.g., 128/82', req:true, next:function(){ return 'en_bp_meds'; }},
+  {id:'en_bp_meds',         sec:'endocrine', type:'yn',        text:'Do you take medication for high blood pressure?',                       speak:'Do you take medication for high blood pressure?',                                        noDetail:true, next:function(a){ return a==='Yes'?'en_bp_meds_change':'bridge_cardio'; }},
+  {id:'en_bp_meds_change',  sec:'endocrine', type:'yn',        text:'Have you had a change to your blood pressure medication in the past 12 months?', speak:'Have you had a change to your blood pressure medication in the past 12 months?', next:function(){ return 'bridge_cardio'; }},
+
+  // ── Cardiovascular ─────────────────────────────────────────────────
+  {id:'bridge_cardio', sec:'cardio', type:'section', text:'Cardiovascular Health',                             speak:'Now some questions about your cardiovascular health.',                                   next:function(){ return 'cv_heart'; }},
+  // FIX 8: heart disease asks what/when before cardiac list
+  {id:'cv_heart',       sec:'cardio', type:'yn',        text:'Have you been diagnosed with heart disease?',    speak:'Have you been diagnosed with heart disease?',                                            noDetail:true, next:function(a){ return a==='Yes'?'cv_heart_dx':'cv_heart_detail'; }},
+  {id:'cv_heart_dx',    sec:'cardio', type:'text',      text:'What was the diagnosis and when was it?',        speak:'What was the heart disease diagnosis and when was it?',                                  ph:'e.g., Coronary artery disease, diagnosed March 2021', req:true, next:function(){ return 'cv_heart_detail'; }},
+  // FIX 9: cardiac list requires ALL items answered
+  {id:'cv_heart_detail', sec:'cardio', type:'cardiaclist', text:'Have you had any of the following cardiac conditions?', speak:'Have you had any of the following cardiac conditions? Please answer yes or no for each condition.', next:function(){ return 'cv_circ'; }},
+  {id:'cv_circ',        sec:'cardio', type:'yn',        text:'Do you have any circulatory conditions such as DVT (deep vein thrombosis)?', speak:'Do you have any circulatory conditions, such as deep vein thrombosis?', next:function(){ return 'bridge_respiratory'; }},
+
+  // ── Respiratory ────────────────────────────────────────────────────
+  {id:'bridge_respiratory', sec:'respiratory', type:'section', text:'Respiratory / Pulmonary Health',          speak:'Now some questions about your respiratory health.',                                      next:function(){ return 'resp_pulm'; }},
+  // FIX 10: pulmonary expands into condition checklist with details
+  {id:'resp_pulm',      sec:'respiratory', type:'yn',        text:'Do you have any pulmonary conditions such as asthma, COPD, or emphysema?', speak:'Do you have any pulmonary conditions such as asthma, COPD, or emphysema?', noDetail:true, next:function(a){ return a==='Yes'?'resp_pulm_type':'bridge_neuro'; }},
+  {id:'resp_pulm_type', sec:'respiratory', type:'pulmonarylist', text:'Please select all pulmonary conditions that apply and provide details for each.', speak:'Please select all pulmonary conditions that apply and provide details for each one.', next:function(){ return 'bridge_neuro'; }},
+
+  // ── Neurological ───────────────────────────────────────────────────
+  {id:'bridge_neuro', sec:'neuro', type:'section', text:'Neurological Health',                                 speak:'Now some questions about your neurological health.',                                     next:function(){ return 'nr_stroke'; }},
+  // FIX 11: stroke/TIA expands into condition checklist with details
+  {id:'nr_stroke',      sec:'neuro', type:'yn',            text:"Have you had a stroke, TIA (mini-stroke), Parkinson's disease, or multiple sclerosis?", speak:"Have you had a stroke, a TIA sometimes called a mini-stroke, Parkinson's disease, or multiple sclerosis?", noDetail:true, next:function(a){ return a==='Yes'?'nr_stroke_type':'nr_memory'; }},
+  {id:'nr_stroke_type', sec:'neuro', type:'neurologicallist', text:'Please select all neurological conditions that apply and provide details for each.', speak:'Please select all that apply and provide details for each condition.', next:function(){ return 'nr_memory'; }},
+  {id:'nr_memory',      sec:'neuro', type:'yn',            text:'Do you have any history of memory loss or have you mentioned memory concerns to your physician?', speak:'Do you have any history of memory loss, or have you ever mentioned memory concerns to your physician?', next:function(a){ return a==='Yes'?'nr_memory_doc':'nr_imaging'; }},
+  // FIX 12: memory documented expands into last appt + diagnosis steps
+  {id:'nr_memory_doc',       sec:'neuro', type:'yn',   text:'Has the memory concern been documented in your medical records?',                          speak:'Has the memory concern been documented in your medical records?',                                  noDetail:true, next:function(a){ return a==='Yes'?'nr_memory_last_appt':'nr_imaging'; }},
+  {id:'nr_memory_last_appt', sec:'neuro', type:'text', text:'When was the last time you spoke to a medical professional about your memory concerns?',   speak:'When was the last time you spoke to a medical professional about your memory concerns?',           ph:'e.g., March 2025', req:true, next:function(){ return 'nr_memory_diagnosis'; }},
+  {id:'nr_memory_diagnosis', sec:'neuro', type:'yn',   text:'Have you had a diagnosis regarding your memory loss?',                                     speak:'Have you had a diagnosis regarding your memory loss?',                                             next:function(){ return 'nr_imaging'; }},
+  // FIX 13: CT/MRI noDetail=true, goes straight to describe step
+  {id:'nr_imaging',        sec:'neuro', type:'yn',       text:'Have you had any CT scans or MRIs of the brain or other areas of your body in the past 5 years?', speak:'Have you had any CT scans or MRIs of the brain or other areas of your body in the past 5 years?', noDetail:true, next:function(a){ return a==='Yes'?'nr_imaging_detail':'bridge_mental'; }},
+  {id:'nr_imaging_detail', sec:'neuro', type:'textarea', text:'Please describe the reason for the scan and what the findings were.',                  speak:'Please describe the reason for the CT scan or MRI and what the findings were.',                    ph:'e.g., Brain MRI 2024 - reason: headaches, findings: normal', req:true, next:function(){ return 'bridge_mental'; }},
+
+  // ── Mental Health ──────────────────────────────────────────────────
+  {id:'bridge_mental',  sec:'mental', type:'section', text:'Mental Health & Substance Use',                   speak:'Now a few questions about mental health and substance use.',                              next:function(){ return 'mh_depression'; }},
+  {id:'mh_depression',  sec:'mental', type:'yn',  text:'Do you have a history of depression or anxiety?',      speak:'Do you have a history of depression or anxiety?',                                        next:function(){ return 'mh_substance'; }},
+  {id:'mh_substance',   sec:'mental', type:'yn',  text:'Have you had any issues with alcohol, drugs, or substance abuse - past or present?', speak:'Have you had any issues with alcohol, drugs, or substance abuse, either past or present?', next:function(){ return 'bridge_cancer'; }},
+
+  // ── Cancer ─────────────────────────────────────────────────────────
+  {id:'bridge_cancer',  sec:'cancer', type:'section', text:'Cancer & Related Conditions',                      speak:'Now some questions about cancer and related conditions.',                                 next:function(){ return 'ca_ever'; }},
+  {id:'ca_ever',        sec:'cancer', type:'yn',      text:'Have you ever been diagnosed with cancer?',         speak:'Have you ever been diagnosed with cancer?',                                              next:function(a){ return a==='Yes'?'ca_detail':'ca_nodules'; }},
+  {id:'ca_detail',      sec:'cancer', type:'textarea', text:'Please describe the type, date of diagnosis, treatment received, and current status.', speak:'Please describe the type of cancer, the date of diagnosis, treatment received, and your current status.', ph:'e.g., Breast cancer, diagnosed 2019, chemotherapy and surgery, currently in remission', req:true, next:function(){ return 'ca_nodules'; }},
+  // FIX 14: nodules noDetail=true, goes straight to describe step
+  {id:'ca_nodules',        sec:'cancer', type:'yn',       text:'Are you currently being monitored for nodules on the lungs or other organs?', speak:'Are you currently being monitored for nodules on the lungs or any other organs?', noDetail:true, next:function(a){ return a==='Yes'?'ca_nodules_detail':'bridge_autoimmune'; }},
+  {id:'ca_nodules_detail', sec:'cancer', type:'textarea', text:'Please describe the location of the nodules and the follow-up plan.',         speak:'Please describe the location of the nodules and the current follow-up plan.',         ph:'e.g., Lung nodule found 2023, 6mm, annual CT scan monitoring', req:true, next:function(){ return 'bridge_autoimmune'; }},
+
+  // ── Autoimmune ─────────────────────────────────────────────────────
+  {id:'bridge_autoimmune', sec:'autoimmune', type:'section', text:'Autoimmune / Chronic Conditions',           speak:'Now a question about autoimmune and chronic conditions.',                                next:function(){ return 'ai_connective'; }},
+  {id:'ai_connective',     sec:'autoimmune', type:'yn',      text:'Do you have a history of mixed connective tissue disease or fibromyalgia?', speak:'Do you have a history of mixed connective tissue disease or fibromyalgia?', next:function(){ return 'bridge_lab'; }},
+
+  // ── Lab ────────────────────────────────────────────────────────────
+  {id:'bridge_lab',  sec:'lab', type:'section', text:'Lab & Organ Function',                                   speak:'Now some questions about your recent lab work.',                                         next:function(){ return 'lab_blood'; }},
+  {id:'lab_blood',   sec:'lab', type:'choice',  text:'In your most recent lab work, were your red blood cells, white blood cells, and platelets all in the normal range?', speak:'In your most recent lab work, were your red blood cells, white blood cells, and platelets all in the normal range?', opts:['Yes','No','Not Sure'], next:function(a){ return a==='No'?'lab_blood_detail':'lab_organ'; }},
+  {id:'lab_blood_detail', sec:'lab', type:'labcbclist', text:'Please indicate which values were abnormal and provide details.', speak:'Please check each value that was abnormal and provide details.', next:function(){ return 'lab_organ'; }},
+  {id:'lab_organ',   sec:'lab', type:'choice',  text:'Are your liver and kidney function results in the normal range?', speak:'Are your liver and kidney function results in the normal range?', opts:['Yes','No','Not Sure'], next:function(a){ return a==='No'?'lab_organ_detail':'lab_eval'; }},
+  {id:'lab_organ_detail', sec:'lab', type:'laborganlist', text:'Please indicate which values were abnormal and provide details.', speak:'Please check each value that was abnormal and provide details.', next:function(){ return 'lab_eval'; }},
+  {id:'lab_eval',    sec:'lab', type:'yn',      text:'Are there any health issues your doctor believes need further evaluation or testing?', speak:'Are there any health issues your doctor believes need further evaluation or additional testing?', next:function(){ return 'bridge_hospital'; }},
+
+  // ── Hospitalizations ───────────────────────────────────────────────
+  {id:'bridge_hospital', sec:'hospital', type:'section', text:'Hospitalizations, Surgeries & Disability',     speak:'Now some questions about hospitalizations, surgeries, and disability.',                   next:function(){ return 'hosp_ever'; }},
+  // FIX 15: hosp noDetail=true, goes straight to list step
+  {id:'hosp_ever',     sec:'hospital', type:'yn',      text:'Have you been hospitalized in the past 5 years?',                                    speak:'Have you been hospitalized in the past 5 years?',                                        noDetail:true, next:function(a){ return a==='Yes'?'hosp_detail':'hosp_surgery'; }},
+  {id:'hosp_detail',   sec:'hospital', type:'textarea', text:'Please list the dates and reasons for each hospitalization.',                       speak:'Please list the dates and reasons for each hospitalization in the past 5 years.',        ph:'e.g., March 2022 - knee replacement surgery; July 2023 - pneumonia', req:true, next:function(){ return 'hosp_surgery'; }},
+  {id:'hosp_surgery',  sec:'hospital', type:'yn',      text:'Are there any surgeries planned or recommended by your physician?',                   speak:'Are there any surgeries currently planned or recommended by your physician?',             next:function(){ return 'hosp_disability'; }},
+  {id:'hosp_disability', sec:'hospital', type:'yn',    text:"Have you ever been on any form of disability - Social Security Disability, private disability, group disability, or workers' compensation?", speak:"Have you ever been on any form of disability, including Social Security Disability, private disability, group disability, or workers compensation?", next:function(){ return 'bridge_mobility'; }},
+
+  // ── Mobility ───────────────────────────────────────────────────────
+  {id:'bridge_mobility', sec:'mobility', type:'section', text:'Mobility & Function',                           speak:'Just a couple more questions about your mobility.',                                      next:function(){ return 'mob_handicap'; }},
+  // FIX 16: handicap permit expands into when/why step
+  {id:'mob_handicap',        sec:'mobility', type:'yn',   text:'Do you use a handicapped parking permit?',                                              speak:'Do you currently use a handicapped parking permit?',                                     noDetail:true, next:function(a){ return a==='Yes'?'mob_handicap_detail':'bridge_family'; }},
+  {id:'mob_handicap_detail', sec:'mobility', type:'text', text:'When did you get the handicapped parking permit and what was the reason for its issuance?', speak:'When did you get the handicapped parking permit and what was the reason for its issuance?', ph:'e.g., 2022, issued due to severe arthritis in both knees', req:true, next:function(){ return 'bridge_family'; }},
+
+  // ── Family History ─────────────────────────────────────────────────
+  {id:'bridge_family',  sec:'family', type:'section', text:'Family History',                                   speak:'Now a couple of questions about your family medical history.',                            next:function(){ return 'fam_huntington'; }},
+  // FIX 17 & 18: Huntington's and PKD now ask for more info when Yes
+  {id:'fam_huntington', sec:'family', type:'yn',  text:"Is there any family history - in parents or siblings - of Huntington's Chorea?",              speak:"Is there any family history, in your parents or siblings, of Huntington's Chorea?",     next:function(){ return 'fam_kidney'; }},
+  {id:'fam_kidney',     sec:'family', type:'yn',  text:'Is there any family history - in parents or siblings - of Polycystic Kidney Disease?',         speak:'Is there any family history, in your parents or siblings, of Polycystic Kidney Disease?', next:function(){ return 'bridge_other'; }},
+
+  // ── Other ──────────────────────────────────────────────────────────
+  {id:'bridge_other',    sec:'other', type:'section', text:'Other Medical Conditions',                         speak:'And finally, one last question.',                                                        next:function(){ return 'other_conditions'; }},
+  {id:'other_conditions', sec:'other', type:'yn',     text:'Do you have any other medical conditions that you think might be worth mentioning?',       speak:'Do you have any other medical conditions that you think might be worth mentioning?',    next:function(){ return null; }},
+];
+
+var QMap = {};
+Q.forEach(function(q){ QMap[q.id] = q; });
+
+var S = {
+  introFirstName:'', introLastName:'',
+  answers:{}, yesDetails:{}, medications:[], answered:[]
+};
+var voiceOn = true;
+var _currentAudio = null;
+var _speakGen = 0;
+var _wantsPdf = false;
+var _pdfBytes = null;
+var _pdfEncrypted = false;
+var _currentEditSec = null;
+var _origPin = '';
+
+function stopSpeaking(){
+  if(_currentAudio){_currentAudio.pause();_currentAudio.src='';_currentAudio=null;}
+  if(window.speechSynthesis)window.speechSynthesis.cancel();
+  _speakGen++; setSpk(false);
+}
+
+function speakBrowser(text,cb){
+  if(!window.speechSynthesis){if(cb)cb();return;}
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  u.rate=0.92;u.pitch=1.05;u.volume=1.0;
+  var voices=window.speechSynthesis.getVoices();
+  var pref=['Samantha','Karen','Zira','Susan','Aria','Jenny','Salli','Joanna'];
+  var picked=null;
+  for(var i=0;i<pref.length;i++){picked=voices.find(function(v){return v.name.indexOf(pref[i])>=0;});if(picked)break;}
+  if(!picked)picked=voices.find(function(v){return v.lang==='en-US';});
+  if(picked)u.voice=picked;
+  u.onend=function(){setSpk(false);if(cb)cb();};
+  u.onerror=function(){setSpk(false);if(cb)cb();};
+  setSpk(true);
+  window.speechSynthesis.speak(u);
+}
+
+function speak(text,cb){
+  if(!voiceOn){if(cb)cb();return;}
+  stopSpeaking();
+  setSpk(true);
+  var myGen=_speakGen;
+  fetch('https://api.elevenlabs.io/v1/text-to-speech/ceCu3foeCbOAmglkoyf3',{
+    method:'POST',
+    headers:{'xi-api-key':'sk_bd229f9a0cc9b0a343c9dbff3e021e31f222319ad7041ab5','Content-Type':'application/json','Accept':'audio/mpeg'},
+    body:JSON.stringify({text:text,model_id:'eleven_flash_v2_5',voice_settings:{stability:0.5,similarity_boost:0.85,style:0.0,use_speaker_boost:true}})
+  })
+  .then(function(r){
+    if(!r.ok){setSpk(false);speakBrowser(text,cb);return Promise.resolve();}
+    return r.blob();
+  })
+  .then(function(blob){
+    if(!blob||blob.size<100){setSpk(false);speakBrowser(text,cb);return;}
+    var url=URL.createObjectURL(blob);
+    if(myGen!==_speakGen){URL.revokeObjectURL(url);setSpk(false);return;}
+    var a=new Audio(url);
+    _currentAudio=a;
+    a.onended=function(){_currentAudio=null;setSpk(false);URL.revokeObjectURL(url);if(cb)cb();};
+    a.onerror=function(){_currentAudio=null;setSpk(false);URL.revokeObjectURL(url);if(cb)cb();};
+    a.play().catch(function(){_currentAudio=null;setSpk(false);speakBrowser(text,cb);});
+  })
+  .catch(function(){setSpk(false);speakBrowser(text,cb);});
+}
+
+// ─── Fanfare using Web Audio API ─────────────────────────────────────────────
+function playFanfare(cb){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    // duh-duh-DAH: three notes, trumpet-like timbre
+    var notes=[
+      {freq:392,dur:0.15,start:0},   // G4 - duh
+      {freq:523,dur:0.15,start:0.18}, // C5 - duh
+      {freq:659,dur:0.5, start:0.36}  // E5 - DAH (longer)
+    ];
+    notes.forEach(function(n){
+      var osc=ctx.createOscillator();
+      var gain=ctx.createGain();
+      // Add harmonics for trumpet-like sound
+      var osc2=ctx.createOscillator();
+      var gain2=ctx.createGain();
+      osc.type='sawtooth';osc.frequency.value=n.freq;
+      osc2.type='square';osc2.frequency.value=n.freq*2;
+      gain.gain.setValueAtTime(0,ctx.currentTime+n.start);
+      gain.gain.linearRampToValueAtTime(0.18,ctx.currentTime+n.start+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+n.start+n.dur);
+      gain2.gain.setValueAtTime(0,ctx.currentTime+n.start);
+      gain2.gain.linearRampToValueAtTime(0.06,ctx.currentTime+n.start+0.02);
+      gain2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+n.start+n.dur);
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc2.connect(gain2);gain2.connect(ctx.destination);
+      osc.start(ctx.currentTime+n.start);osc.stop(ctx.currentTime+n.start+n.dur);
+      osc2.start(ctx.currentTime+n.start);osc2.stop(ctx.currentTime+n.start+n.dur);
+    });
+    setTimeout(function(){try{ctx.close();}catch(e){}if(cb)cb();},1100);
+  }catch(e){if(cb)cb();}
+}
+
+function setSpk(on){
+  var ic=document.getElementById('ivIcon');
+  var bars=document.getElementById('ivBars');
+  if(ic)ic.classList.toggle('speaking',on);
+  if(bars)bars.classList.toggle('on',on);
+}
+
+function toggleMute(){
+  voiceOn=!voiceOn;
+  var btn=document.getElementById('muteBtn');
+  if(btn)btn.textContent=voiceOn?'Mute Voice':'Unmute Voice';
+  if(!voiceOn)stopSpeaking();
+}
+
+function clickNext(){
+  var fn=(document.getElementById('introFirstName').value||'').trim();
+  var ln=(document.getElementById('introLastName').value||'').trim();
+  if(!fn||!ln){
+    document.getElementById('nameErr').style.display='block';
+    if(!fn)document.getElementById('introFirstName').focus();
+    else document.getElementById('introLastName').focus();
+    return;
+  }
+  S.introFirstName=fn; S.introLastName=ln;
+  document.getElementById('greetName').textContent=fn;
+  speak('... Welcome to the LTC Specialists Long-Term Care Pre-Screening Medical Questionnaire.',function(){
+    document.getElementById('welcomeScreen').style.display='none';
+    document.getElementById('ivPanel').style.display='flex';
+    document.getElementById('introScreen').style.display='block';
+    setTimeout(function(){
+      speak('Hello '+fn+'! This is a confidential medical history pre-screening interview, not an insurance application. We need to learn about your health history so we can determine your insurability for long-term care coverage and identify the best options for your needs. Please answer every question as accurately and completely as possible, and think specifically about what is likely in your medical records. When you are ready, click Begin Pre-Screening to get started.');
+    },300);
+  });
+}
+
+function startInterview(){
+  document.getElementById('introScreen').style.display='none';
+  document.getElementById('ivScreen').style.display='block';
+  var fn=S.introFirstName;
+  speak("Wonderful"+(fn?', '+fn:'')+". Let's get started.",function(){showQ(Q[0].id);});
+}
+
+function showQ(id){
+  if(!id||!QMap[id]){endInterview();return;}
+  if(id==='p_name'){
+    var fullName=S.introFirstName+' '+S.introLastName;
+    S.answers['p_name']=fullName;
+    if(S.answered.indexOf('p_name')<0)S.answered.push('p_name');
+    showQ(QMap['p_name'].next()); return;
+  }
+  var q=QMap[id]; S.currentId=id; updateProg();
+  var ve=document.getElementById('valErr'); if(ve){ve.classList.remove('show');ve.textContent='Please provide an answer before continuing.';}
+  var el=document.getElementById('qText');
+  if(el){
+    el.classList.add('fade');
+    setTimeout(function(){
+      var sec=SECTIONS.find(function(s){return s.id===q.sec;});
+      var badge=document.getElementById('secBadge');
+      if(badge)badge.textContent=sec?sec.label:q.sec;
+      el.textContent=(q.type==='section'?'':q.text); el.classList.remove('fade');
+      renderAnswer(q);
+      if(_pendingMilestone){
+        // Play milestone THEN speak the question — no overlap possible
+        var m=_pendingMilestone; _pendingMilestone=null;
+        _playMilestone(m, function(){ speak(q.speak||q.text); });
+      } else {
+        speak(q.speak||q.text);
+      }
+    },200);
+  }
+}
+
+function proceedAns(id,val){
+  stopSpeaking();
+  S.answers[id]=val;
+  if(S.answered.indexOf(id)<0)S.answered.push(id);
+  updateProg();
+  _checkMilestonePending(); // just sets flag, doesn't speak yet
+  var q=QMap[id]; var nextId=q.next(val);
+  if(nextId&&QMap[nextId])showQ(nextId); else endInterview();
+}
+
+function submitAns(id,val){proceedAns(id,val);}
+
+var _lastMilestonePct = 0;
+function updateProg(){
+  var total=Q.length,done=S.answered.length,pct=Math.round(done/total*100);
+  var pf=document.getElementById('progFill');if(pf)pf.style.width=pct+'%';
+  var pl=document.getElementById('progLbl');if(pl)pl.textContent='Step '+(done+1)+' of '+total;
+  var pp=document.getElementById('progPct');if(pp)pp.textContent=pct+'% Complete';
+}
+
+var _pendingMilestone = null;
+
+function _checkMilestonePending(){
+  // Called after answer submitted — just records if a milestone was reached, doesn't speak yet
+  var total=Q.length,done=S.answered.length,pct=Math.round(done/total*100);
+  var milestones=[25,50,75];
+  milestones.forEach(function(m){
+    if(pct>=m && _lastMilestonePct<m){
+      _lastMilestonePct=m;
+      _pendingMilestone=m; // will be played after next question finishes speaking
+    }
+  });
+}
+
+function _playMilestone(m, afterCb){
+  // Play fanfare + badge + voice, then call afterCb when all done
+  var msg='';
+  if(m===25) msg="Great job! You're one quarter of the way through. Keep it up!";
+  if(m===50) msg="Wonderful, you're halfway there! You're doing great.";
+  if(m===75) msg="Excellent work! You're three quarters done. Almost there!";
+  var dot=document.getElementById('msDot'+m);if(dot)dot.classList.add('reached');
+  var badge=document.getElementById('milestoneBadge');
+  if(badge){
+    badge.innerHTML='🎉 '+m+'% Complete!';
+    badge.style.cssText='display:block;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:var(--green);color:#fff;font-family:Outfit,sans-serif;font-size:20px;font-weight:700;padding:18px 36px;border-radius:50px;box-shadow:0 8px 40px rgba(133,178,52,.5);z-index:9999;text-align:center;animation:milestone-pop .5s ease forwards';
+    setTimeout(function(){badge.style.animation='milestone-fade 1s ease forwards';setTimeout(function(){badge.style.display='none';},1000);},2500);
+  }
+  playFanfare(function(){
+    if(msg){
+      speak(msg, function(){ if(afterCb) afterCb(); });
+    } else {
+      if(afterCb) afterCb();
+    }
+  });
+}
+
+function checkMilestone(){ _checkMilestonePending(); } // kept for compat
+
+// ─── renderAnswer ──────────────────────────────────────────────────────────────
+function renderAnswer(q){
+  var area=document.getElementById('aArea'); if(!area)return; area.innerHTML='';
+
+  if(q.type==='section'){
+    var div=mk('div','section-bridge');
+    var h=mk('h3','');h.textContent=q.text;div.appendChild(h);
+    var p=mk('p','');p.style.color='var(--ink2)';p.textContent='Click Continue when ready.';div.appendChild(p);
+    var btn=contBtn();btn.onclick=function(){proceedAns(q.id,'ok');};div.appendChild(btn);
+    div.appendChild(backBtn()); area.appendChild(div);
+  }
+
+  else if(q.type==='yn'){
+    var detailBox=mk('div','yes-detail');
+    var g=mk('div','yn-wrap');
+    ['Yes','No'].forEach(function(v){
+      var b=mk('button','yn-btn '+v.toLowerCase());
+      b.textContent=(v==='Yes'?'✔  Yes':'✖  No');
+      b.onclick=function(){handleYN(q.id,v,g,detailBox,q.noDetail);};
+      g.appendChild(b);
+    });
+    area.appendChild(g); area.appendChild(backBtn());
+    var dlbl=mk('div','yes-detail-lbl');dlbl.textContent='Please provide more information:';detailBox.appendChild(dlbl);
+    var dta=document.createElement('textarea');
+    dta.id='yesDetail_'+q.id;
+    dta.style.cssText='width:100%;min-height:100px;padding:12px 14px;border-radius:8px;border:2px solid var(--green);background:var(--gpale);font-family:Outfit,sans-serif;font-size:16px;outline:none;resize:vertical;line-height:1.6;display:block;margin-top:6px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;box-sizing:border-box';
+    detailBox.appendChild(dta);
+    var dBtn=mk('button','yes-cont-btn');dBtn.textContent='Continue';
+    dBtn.onclick=function(){
+      var d=(dta.value||'').trim();
+      if(!d){dta.style.borderColor='var(--red)';speak('Additional information is required before you can advance to the next question.');dta.focus();return;}
+      S.yesDetails[q.id]=d;proceedAns(q.id,'Yes');
+    };
+    detailBox.appendChild(dBtn); area.appendChild(detailBox);
+  }
+
+  else if(q.type==='choice'){
+    var cw=mk('div','choice-wrap');
+    q.opts.forEach(function(opt){
+      var b2=mk('button','choice-btn');b2.textContent=opt;
+      b2.onclick=function(){submitAns(q.id,opt);};
+      cw.appendChild(b2);
+    });
+    area.appendChild(cw); area.appendChild(backBtn());
+  }
+
+  else if(q.type==='height'){
+    var hrow=mk('div','');hrow.style.cssText='display:flex;gap:16px;align-items:flex-end;max-width:320px';
+    var hg1=mk('div','inp-group');var hl1=mk('label','inp-label');hl1.textContent='Feet';
+    var hft=document.createElement('select');hft.id='heightFt';hft.className='inp';hft.style.cssText='width:130px;padding:13px 12px';
+    var fOpt=document.createElement('option');fOpt.value='';fOpt.textContent='-- Feet';hft.appendChild(fOpt);
+    for(var fi=3;fi<=7;fi++){var fo=document.createElement('option');fo.value=fi;fo.textContent=fi+' ft';hft.appendChild(fo);}
+    hg1.appendChild(hl1);hg1.appendChild(hft);hrow.appendChild(hg1);
+    var hg2=mk('div','inp-group');var hl2=mk('label','inp-label');hl2.textContent='Inches';
+    var hin=document.createElement('select');hin.id='heightIn';hin.className='inp';hin.style.cssText='width:150px;padding:13px 12px';
+    for(var ii=0;ii<=11;ii++){var io=document.createElement('option');io.value=ii;io.textContent=ii+' in';hin.appendChild(io);}
+    hg2.appendChild(hl2);hg2.appendChild(hin);hrow.appendChild(hg2);
+    area.appendChild(hrow);
+    var hBtn=contBtn();
+    hBtn.onclick=function(){
+      var ft=(document.getElementById('heightFt').value||'').trim();
+      if(!ft){
+        var ve2=document.getElementById('valErr');
+        if(ve2){ve2.textContent='You must provide your height before proceeding.';ve2.classList.add('show');}
+        speak('You must provide your height before proceeding.');
+        return;
+      }
+      var ins=(document.getElementById('heightIn').value||'0').trim();
+      submitAns(q.id,ft+"' "+ins+'"');
+    };
+    area.appendChild(hBtn); area.appendChild(backBtn());
+  }
+
+  else if(q.type==='name'){
+    var ng=mk('div','inp-grid');
+    var ng1=mk('div','inp-group');var nl1=mk('label','inp-label');nl1.textContent='First Name';
+    var nfirst=mkInp('text','First name');nfirst.id='nameFirst';
+    ng1.appendChild(nl1);ng1.appendChild(nfirst);ng.appendChild(ng1);
+    var ng2=mk('div','inp-group');var nl2=mk('label','inp-label');nl2.textContent='Last Name';
+    var nlast=mkInp('text','Last name');nlast.id='nameLast';
+    ng2.appendChild(nl2);ng2.appendChild(nlast);ng.appendChild(ng2);
+    area.appendChild(ng);
+    var nbtn=contBtn();
+    nbtn.onclick=function(){
+      var fn2=(document.getElementById('nameFirst').value||'').trim();
+      var ln2=(document.getElementById('nameLast').value||'').trim();
+      if(!fn2||!ln2){var ve3=document.getElementById('valErr');if(ve3)ve3.classList.add('show');return;}
+      S.introFirstName=fn2;S.introLastName=ln2;submitAns(q.id,fn2+' '+ln2);
+    };
+    area.appendChild(nbtn);area.appendChild(backBtn());
+    setTimeout(function(){nfirst.focus();},300);
+  }
+
+  else if(q.type==='text'){
+    var inp=mkInp('text',q.ph||'');inp.id='txtAns';
+    if(q.dob)inp.placeholder='MM/DD/YYYY';
+    if(q.dob){
+      inp.oninput=function(){
+        var v=inp.value.replace(/[^0-9]/g,'');
+        if(v.length===8)inp.value=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+        if(inp.value.trim()){inp.classList.remove('invalid');var ve4=document.getElementById('valErr');if(ve4)ve4.classList.remove('show');}
+      };
+    } else {
+      inp.oninput=function(){if(inp.value.trim()){inp.classList.remove('invalid');var ve5=document.getElementById('valErr');if(ve5)ve5.classList.remove('show');}};
+    }
+    inp.onkeydown=function(e){if(e.key==='Enter'){if(q.dob&&inp.value.trim())inp.value=formatDOB(inp.value.trim());trySub(q.id,inp);}};
+    area.appendChild(inp);
+    var tbtn=contBtn();tbtn.onclick=function(){if(q.dob&&inp.value.trim())inp.value=formatDOB(inp.value.trim());trySub(q.id,inp);};
+    area.appendChild(tbtn);area.appendChild(backBtn());
+    setTimeout(function(){inp.focus();},300);
+  }
+
+  else if(q.type==='textarea'){
+    var ta=document.createElement('textarea');ta.className='inp'+(q.tall?' tall':'');ta.placeholder=q.ph||'';ta.id='taAns';
+    ta.oninput=function(){if(ta.value.trim()){ta.classList.remove('invalid');var ve6=document.getElementById('valErr');if(ve6)ve6.classList.remove('show');}};
+    area.appendChild(ta);
+    var ta_btn=contBtn();ta_btn.onclick=function(){trySub(q.id,ta);};
+    area.appendChild(ta_btn);area.appendChild(backBtn());
+    setTimeout(function(){ta.focus();},300);
+  }
+
+  else if(q.type==='cardiaclist'){
+    renderCardiacList(area,q);
+  }
+
+  else if(q.type==='multicheck'){
+    // FIX 5b: entire row is clickable
+    var mcWrap=mk('div','');mcWrap.style.cssText='display:flex;flex-direction:column;gap:10px;margin-bottom:12px';
+    var selected=S.answers[q.id]?S.answers[q.id].split(', '):[];
+    q.opts.forEach(function(opt){
+      var row=mk('div','');row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px 16px;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer;background:var(--white)';
+      var cb=document.createElement('input');cb.type='checkbox';cb.style.cssText='width:20px;height:20px;accent-color:var(--green);cursor:pointer;flex-shrink:0;pointer-events:none';cb.value=opt;
+      cb.checked=selected.indexOf(opt)>=0;
+      if(cb.checked){row.style.borderColor='var(--green)';row.style.background='var(--gpale)';}
+      var lbl=mk('span','');lbl.textContent=opt;lbl.style.cssText='font-size:18px;font-weight:500;cursor:pointer;flex:1';
+      row.onclick=function(){cb.checked=!cb.checked;row.style.borderColor=cb.checked?'var(--green)':'#e0e0e0';row.style.background=cb.checked?'var(--gpale)':'var(--white)';};
+      row.appendChild(cb);row.appendChild(lbl);mcWrap.appendChild(row);
+    });
+    area.appendChild(mcWrap);
+    area.appendChild(backBtn());
+    var mcBtn=contBtn();
+    mcBtn.onclick=function(){
+      var checked=mcWrap.querySelectorAll('input[type=checkbox]:checked');
+      if(checked.length===0){var ve8=document.getElementById('valErr');if(ve8)ve8.classList.add('show');speak('Please select at least one option before continuing.');return;}
+      var vals=Array.from(checked).map(function(c){return c.value;}).join(', ');
+      submitAns(q.id,vals);
+    };
+    area.appendChild(mcBtn);
+  }
+
+  else if(q.type==='pulmonarylist'){
+    renderConditionList(area, q, ['Asthma','COPD','Emphysema','Pulmonary Fibrosis','Pulmonary Hypertension','Other']);
+  }
+
+  else if(q.type==='neurologicallist'){
+    renderConditionList(area, q, ['Stroke','TIA (Mini-Stroke)',"Parkinson's Disease",'Multiple Sclerosis']);
+  }
+
+  else if(q.type==='labcbclist'){
+    renderLabList(area, q, ['Red Blood Cells (RBC)','White Blood Cells (WBC)','Platelets']);
+  }
+  else if(q.type==='laborganlist'){
+    renderLabList(area, q, ['Liver Function (ALT/AST)','Kidney Function (Creatinine/BUN)']);
+  }
+  else if(q.type==='medications'){
+    renderMedsUI(area,q.id);
+  }
+}
+
+// ─── renderLabList ─────────────────────────────────────────────────────────────
+function renderLabList(area, q, items){
+  var labAnswers = S.answers[q.id] ? JSON.parse(S.answers[q.id]) : {};
+  var clWrap = mk('div',''); clWrap.style.cssText='display:flex;flex-direction:column;gap:12px;margin-bottom:12px';
+  items.forEach(function(item){
+    var row = mk('div',''); row.style.cssText='padding:14px 16px;border:1.5px solid #e0e0e0;border-radius:10px;background:var(--white)';
+    var cbRow = mk('div',''); cbRow.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer';
+    var cb = document.createElement('input'); cb.type='checkbox';
+    cb.style.cssText='width:20px;height:20px;accent-color:var(--red);cursor:pointer;flex-shrink:0;pointer-events:none';
+    cb.checked = !!(labAnswers[item] && labAnswers[item].abnormal);
+    var cbLbl = mk('span',''); cbLbl.textContent=item; cbLbl.style.cssText='font-size:16px;font-weight:600;color:var(--ink);cursor:pointer';
+    var detWrap = mk('div',''); detWrap.style.display = cb.checked ? 'block' : 'none';
+    var detInp = document.createElement('textarea');
+    detInp.placeholder='Please describe the abnormal result and any follow-up (e.g., value, date, doctor comment)';
+    detInp.style.cssText='width:100%;min-height:80px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--red);background:var(--rpale);font-family:Outfit,sans-serif;font-size:15px;outline:none;resize:vertical';
+    detInp.value = labAnswers[item] && labAnswers[item].detail || '';
+    detInp.oninput = function(){ labAnswers[item]=labAnswers[item]||{}; labAnswers[item].detail=detInp.value; };
+    detWrap.appendChild(detInp);
+    cbRow.onclick = function(){
+      cb.checked=!cb.checked;
+      labAnswers[item]=labAnswers[item]||{}; labAnswers[item].abnormal=cb.checked;
+      row.style.borderColor=cb.checked?'var(--red)':'#e0e0e0';
+      row.style.background=cb.checked?'var(--rpale)':'var(--white)';
+      detWrap.style.display=cb.checked?'block':'none';
+      if(cb.checked){setTimeout(function(){detInp.focus();},200);}
+    };
+    if(cb.checked){row.style.borderColor='var(--red)';row.style.background='var(--rpale)';}
+    cbRow.appendChild(cb); cbRow.appendChild(cbLbl);
+    row.appendChild(cbRow); row.appendChild(detWrap);
+    clWrap.appendChild(row);
+  });
+  area.appendChild(clWrap);
+  area.appendChild(backBtn());
+  var clBtn = contBtn();
+  clBtn.onclick = function(){
+    var checked = items.filter(function(i){ return labAnswers[i] && labAnswers[i].abnormal; });
+    if(checked.length===0){
+      var ve=document.getElementById('valErr');
+      if(ve){ve.textContent='Please check at least one value and provide details.';ve.classList.add('show');}
+      speak('Please select at least one abnormal value before continuing.');
+      return;
+    }
+    var missing = checked.filter(function(i){ return !(labAnswers[i].detail||'').trim(); });
+    if(missing.length>0){ speak('Please provide details for each abnormal value you checked.'); return; }
+    S.answers[q.id]=JSON.stringify(labAnswers);
+    if(S.answered.indexOf(q.id)<0)S.answered.push(q.id);
+    var nextId=q.next(); if(nextId&&QMap[nextId])showQ(nextId); else endInterview();
+  };
+  area.appendChild(clBtn);
+}
+
+// ─── renderCardiacList ────────────────────────────────────────────────────────
+// FIX 9: ALL items must be answered before proceeding
+function renderCardiacList(area,q){
+  var cardiacItems=['Stents','Angioplasty','Atrial Fibrillation','Heart Attack','Valve Replacement','Other'];
+  var cardiacAnswers=S.answers[q.id]?JSON.parse(S.answers[q.id]):{};
+  var clWrap=mk('div','');clWrap.style.cssText='display:flex;flex-direction:column;gap:12px;margin-bottom:12px';
+  cardiacItems.forEach(function(item){
+    var row=mk('div','');row.style.cssText='padding:14px 16px;border:1.5px solid #e0e0e0;border-radius:10px;background:var(--white)';
+    var lbl=mk('div','');lbl.textContent=item;lbl.style.cssText='font-size:17px;font-weight:600;margin-bottom:8px;color:var(--ink)';
+    var ynRow=mk('div','yn-wrap');ynRow.style.margin='0 0 8px 0';
+    var detWrap=mk('div','');detWrap.style.display=cardiacAnswers[item]&&cardiacAnswers[item].ans==='Yes'?'block':'none';
+    var detInp=document.createElement('textarea');detInp.placeholder='Please provide details (date, treatment, etc.)';
+    detInp.style.cssText='width:100%;min-height:80px;padding:10px 12px;border-radius:8px;border:1.5px solid #cce0e0;background:var(--gpale);font-family:Outfit,sans-serif;font-size:15px;outline:none;resize:vertical';
+    detInp.value=cardiacAnswers[item]&&cardiacAnswers[item].detail||'';
+    detInp.oninput=function(){cardiacAnswers[item]=cardiacAnswers[item]||{};cardiacAnswers[item].detail=detInp.value;};
+    detWrap.appendChild(detInp);
+    ['Yes','No'].forEach(function(v){
+      var b=mk('button','yn-btn '+v.toLowerCase());b.textContent=(v==='Yes'?'✔  Yes':'✖  No');
+      if(cardiacAnswers[item]&&cardiacAnswers[item].ans===v)b.classList.add('sel');
+      b.onclick=function(){
+        cardiacAnswers[item]=cardiacAnswers[item]||{};cardiacAnswers[item].ans=v;
+        ynRow.querySelectorAll('.yn-btn').forEach(function(x){x.classList.remove('sel');});b.classList.add('sel');
+        row.style.borderColor=v==='Yes'?'var(--green)':'#e0e0e0';
+        detWrap.style.display=v==='Yes'?'block':'none';
+        if(v==='Yes'){setTimeout(function(){detInp.focus();},200);}
+      };
+      ynRow.appendChild(b);
+    });
+    row.appendChild(lbl);row.appendChild(ynRow);row.appendChild(detWrap);clWrap.appendChild(row);
+  });
+  area.appendChild(clWrap);
+  area.appendChild(backBtn());
+  var clBtn=contBtn();
+  clBtn.onclick=function(){
+    // FIX 9: require ALL conditions answered
+    var unanswered=cardiacItems.filter(function(i){return !cardiacAnswers[i]||!cardiacAnswers[i].ans;});
+    if(unanswered.length>0){
+      var ve9=document.getElementById('valErr');
+      if(ve9){ve9.textContent='Please answer Yes or No for every condition before continuing.';ve9.classList.add('show');}
+      speak('Please answer yes or no for every condition before continuing.');
+      return;
+    }
+    var yesWithNoDetail=cardiacItems.filter(function(i){return cardiacAnswers[i]&&cardiacAnswers[i].ans==='Yes'&&!(cardiacAnswers[i].detail||'').trim();});
+    if(yesWithNoDetail.length>0){speak('Please provide details for each condition you answered yes to.');return;}
+    S.answers[q.id]=JSON.stringify(cardiacAnswers);
+    if(S.answered.indexOf(q.id)<0)S.answered.push(q.id);
+    var nextId=q.next();
+    if(nextId&&QMap[nextId])showQ(nextId);else endInterview();
+  };
+  area.appendChild(clBtn);
+}
+
+// ─── renderConditionList ──────────────────────────────────────────────────────
+// Used by pulmonarylist and neurologicallist
+function renderConditionList(area,q,items){
+  var condAnswers=S.answers[q.id]?JSON.parse(S.answers[q.id]):{};
+  var clWrap=mk('div','');clWrap.style.cssText='display:flex;flex-direction:column;gap:12px;margin-bottom:12px';
+  items.forEach(function(item){
+    var row=mk('div','');row.style.cssText='padding:14px 16px;border:1.5px solid #e0e0e0;border-radius:10px;background:var(--white)';
+    var lbl=mk('div','');lbl.textContent=item;lbl.style.cssText='font-size:17px;font-weight:600;margin-bottom:8px;color:var(--ink)';
+    var cbRow=mk('div','');cbRow.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:6px;cursor:pointer';
+    var cb=document.createElement('input');cb.type='checkbox';cb.style.cssText='width:20px;height:20px;accent-color:var(--green);cursor:pointer;flex-shrink:0;pointer-events:none';cb.value=item;
+    cb.checked=!!(condAnswers[item]&&condAnswers[item].checked);
+    var cbLbl=mk('span','');cbLbl.textContent='Check if applicable';cbLbl.style.cssText='font-size:15px;color:var(--ink2);cursor:pointer';
+    var detWrap=mk('div','');detWrap.style.display=cb.checked?'block':'none';
+    var detInp=document.createElement('textarea');detInp.placeholder='Please provide details (dates, treatment, current status, etc.)';
+    detInp.style.cssText='width:100%;min-height:80px;padding:10px 12px;border-radius:8px;border:1.5px solid #cce0e0;background:var(--gpale);font-family:Outfit,sans-serif;font-size:15px;outline:none;resize:vertical';
+    detInp.value=condAnswers[item]&&condAnswers[item].detail||'';
+    detInp.oninput=function(){condAnswers[item]=condAnswers[item]||{};condAnswers[item].detail=detInp.value;};
+    detWrap.appendChild(detInp);
+    cbRow.onclick=function(){
+      cb.checked=!cb.checked;
+      condAnswers[item]=condAnswers[item]||{};condAnswers[item].checked=cb.checked;
+      row.style.borderColor=cb.checked?'var(--green)':'#e0e0e0';
+      row.style.background=cb.checked?'var(--gpale)':'var(--white)';
+      detWrap.style.display=cb.checked?'block':'none';
+      if(cb.checked){setTimeout(function(){detInp.focus();},200);}
+    };
+    if(cb.checked){row.style.borderColor='var(--green)';row.style.background='var(--gpale)';}
+    cbRow.appendChild(cb);cbRow.appendChild(cbLbl);
+    row.appendChild(lbl);row.appendChild(cbRow);row.appendChild(detWrap);
+    clWrap.appendChild(row);
+  });
+  area.appendChild(clWrap);
+  area.appendChild(backBtn());
+  var clBtn=contBtn();
+  clBtn.onclick=function(){
+    var checked=items.filter(function(i){return condAnswers[i]&&condAnswers[i].checked;});
+    if(checked.length===0){var ve=document.getElementById('valErr');if(ve)ve.classList.add('show');speak('Please select at least one condition before continuing.');return;}
+    var missingDetail=checked.filter(function(i){return !(condAnswers[i].detail||'').trim();});
+    if(missingDetail.length>0){speak('Please provide details for each condition you selected.');return;}
+    S.answers[q.id]=JSON.stringify(condAnswers);
+    if(S.answered.indexOf(q.id)<0)S.answered.push(q.id);
+    var nextId=q.next();if(nextId&&QMap[nextId])showQ(nextId);else endInterview();
+  };
+  area.appendChild(clBtn);
+}
+
+// ─── handleYN ─────────────────────────────────────────────────────────────────
+function handleYN(id,val,btnGroup,detailBox,noDetail){
+  var btns=btnGroup.querySelectorAll('.yn-btn');
+  btns.forEach(function(b){b.classList.remove('sel');});
+  var selBtn=btnGroup.querySelector('.yn-btn.'+val.toLowerCase());
+  if(selBtn)selBtn.classList.add('sel');
+  if(val==='Yes'&&noDetail){submitAns(id,'Yes');return;}
+  else if(val==='Yes'){
+    detailBox.classList.add('show');
+    speak('Please provide more information.');
+    setTimeout(function(){var dta2=document.getElementById('yesDetail_'+id);if(dta2)dta2.focus();},400);
+  } else {
+    detailBox.classList.remove('show');
+    submitAns(id,'No');
+  }
+}
+
+function trySub(id,el){
+  var v=(el.value||'').trim();
+  if(!v){el.classList.add('invalid');el.style.borderColor='var(--red)';var ve7=document.getElementById('valErr');if(ve7)ve7.classList.add('show');speak('Additional information is required before you can advance to the next question.');el.focus();return;}
+  submitAns(id,v);
+}
+
+// ─── Medications UI ───────────────────────────────────────────────────────────
+function renderMedsUI(area,qid){
+  var wrapper=mk('div','');wrapper.id='medsWrapper';area.appendChild(wrapper);
+  var addBtn=mk('button','add-med-btn');addBtn.textContent='+ Add Another Medication';
+  addBtn.onclick=function(){
+    var li=S.medications.length-1;var lc=document.getElementById('medCard_'+li);
+    if(lc){
+      var allInputs=lc.querySelectorAll('input[type=text]');
+      var missing=Array.from(allInputs).find(function(i){return !i.value.trim();});
+      if(missing){missing.style.borderColor='var(--red)';missing.focus();speak('Please complete all four fields for the current medication before adding another.');return;}
+    }
+    S.medications.push({});rebuild();
+  };
+  var doneRow=mk('div','');
+  var doneLnk=mk('button','cont-btn');doneLnk.style.cssText='width:100%;padding:15px;font-size:17px;font-weight:700;margin-top:10px;display:block';
+  doneLnk.textContent='I am finished adding medications';
+  doneLnk.onclick=function(){
+    // Validate ALL cards - all 4 fields required on every card
+    var allValid=true;
+    var firstMissing=null;
+    for(var ci=0;ci<S.medications.length;ci++){
+      var card=document.getElementById('medCard_'+ci);
+      if(!card) continue;
+      var inputs=card.querySelectorAll('input[type=text]');
+      inputs.forEach(function(inp){
+        if(!inp.value.trim()){
+          inp.style.borderColor='var(--red)';
+          if(!firstMissing) firstMissing=inp;
+          allValid=false;
+        }
+      });
+    }
+    if(!allValid){
+      if(firstMissing)firstMissing.focus();
+      speak('Please complete all four fields for every medication before continuing. If you are not taking medications, please go back and select No.');
+      return;
+    }
+    submitAns(qid,'__meds_done__');
+  };
+  doneRow.appendChild(doneLnk);
+  var mbk=backBtn();mbk.style.marginTop='8px';doneRow.appendChild(mbk);
+
+  function buildCard(idx){
+    var card=mk('div','med-card');card.id='medCard_'+idx;
+    var title=mk('div','med-card-title');title.textContent='Medication '+(idx+1);card.appendChild(title);
+    if(idx>0){var del=mk('button','med-del');del.innerHTML='✖';del.title='Remove';del.onclick=function(){S.medications.splice(idx,1);rebuild();};card.appendChild(del);}
+    var fields=[
+      {key:'name',label:'Medication Name',ph:'e.g., Lisinopril'},
+      {key:'dosage',label:'Dosage',ph:'e.g., 10mg once daily'},
+      {key:'duration',label:'How long you have been taking it',ph:'e.g., 3 years'},
+      {key:'condition',label:'Condition Being Treated',ph:'e.g., High blood pressure'},
+    ];
+    var grid=mk('div','inp-grid');
+    fields.forEach(function(f){
+      var g2=mk('div','inp-group');var lbl2=mk('label','inp-label');lbl2.textContent=f.label;
+      var i2=mkInp('text',f.ph);i2.value=(S.medications[idx]&&S.medications[idx][f.key])||'';
+      i2.oninput=(function(key){return function(){ensureMed(idx);S.medications[idx][key]=i2.value;};})(f.key);
+      g2.appendChild(lbl2);g2.appendChild(i2);grid.appendChild(g2);
+    });
+    card.appendChild(grid);return card;
+  }
+
+  function rebuild(){
+    wrapper.innerHTML='';
+    if(S.medications.length===0)S.medications.push({});
+    S.medications.forEach(function(_,i){wrapper.appendChild(buildCard(i));});
+    wrapper.appendChild(addBtn);wrapper.appendChild(doneRow);
+  }
+  if(S.medications.length===0)S.medications.push({});
+  rebuild();
+}
+
+function ensureMed(idx){while(S.medications.length<=idx)S.medications.push({});if(!S.medications[idx])S.medications[idx]={};}
+
+function formatDOB(raw){
+  var str=raw.trim();
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str))return str;
+  var d=str.replace(/[^0-9]/g,'');
+  if(d.length===8)return d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4);
+  return raw;
+}
+
+// ─── End / Summary ────────────────────────────────────────────────────────────
+function endInterview(){
+  stopSpeaking();
+  // Play completion fanfare then show summary
+  playFanfare(function(){
+    var badge=document.getElementById('milestoneBadge');
+    if(badge){
+      badge.innerHTML='🏆 100% Complete!';
+      badge.style.cssText='display:block;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:var(--navy);color:#fff;font-family:Outfit,sans-serif;font-size:22px;font-weight:700;padding:20px 40px;border-radius:50px;box-shadow:0 8px 40px rgba(34,57,94,.5);z-index:9999;text-align:center;animation:milestone-pop .5s ease forwards';
+      setTimeout(function(){badge.style.animation='milestone-fade 1s ease forwards';setTimeout(function(){badge.style.display='none';},1000);},2500);
+    }
+    var dot75=document.getElementById('msDot75');if(dot75)dot75.classList.add('reached');
+  });
+  document.getElementById('ivScreen').style.display='none';
+  buildSummary();
+  var ss=document.getElementById('sumScreen');
+  if(ss){ss.style.display='';ss.classList.add('show');}
+  speak('Thank you for completing your pre-screening. Please review your responses in each section below. Click Edit on any section to make changes. When everything looks correct, scroll to the bottom of the page and click Proceed to Submit.');
+}
+
+function buildSummary(){
+  var cb=document.getElementById('cliBanner');
+  if(cb){
+    cb.innerHTML='';
+    [{l:'Name',id:'p_name'},{l:'Date of Birth',id:'p_dob'},{l:'Height',id:'p_height'},{l:'Weight',id:'p_weight'}].forEach(function(f){
+      var d=mk('div','');d.innerHTML='<div class="cli-lbl">'+f.l+'</div><div class="cli-val">'+(S.answers[f.id]||'--')+'</div>';
+      cb.appendChild(d);
+    });
+  }
+  var container=document.getElementById('sumSections');if(!container)return;container.innerHTML='';
+  SECTIONS.forEach(function(sec){
+    var qids=S.answered.filter(function(id){return QMap[id]&&QMap[id].sec===sec.id;});
+    if(!qids.length)return;
+    var block=mk('div','sum-sec');
+    var hdr=mk('div','sum-sec-hdr');
+    var ttl=mk('div','sum-sec-title');ttl.textContent=sec.label;
+    var eBtn=mk('button','edit-btn');eBtn.textContent='Edit';
+    eBtn.onclick=(function(s){return function(){openEdit(s);};})(sec.id);
+    hdr.appendChild(ttl);hdr.appendChild(eBtn);block.appendChild(hdr);
+    var rows=mk('div','sum-rows');
+    if(sec.id==='meds'){
+      qids.forEach(function(id){
+        if(id==='meds_yn'){var r=mk('div','sum-row');r.innerHTML='<span class="sum-q">'+QMap[id].text+'</span><span class="sum-a">'+(S.answers[id]||'--')+'</span>';rows.appendChild(r);}
+      });
+      if(S.medications.length>0&&S.answers['meds_yn']==='Yes'){
+        S.medications.forEach(function(med,i){
+          if(!med.name)return;
+          var r2=mk('div','sum-row');r2.style.flexDirection='column';r2.style.alignItems='flex-start';
+          var h='<span class="sum-q" style="font-weight:700;color:var(--green2)">Medication '+(i+1)+': '+med.name+'</span>';
+          h+='<div style="padding-left:14px;margin-top:4px;font-size:15px;color:var(--ink2);line-height:1.9">';
+          h+='Dosage: '+(med.dosage||'--')+'<br>Duration: '+(med.duration||'--')+'<br>Condition: '+(med.condition||'--');
+          h+='</div>';r2.innerHTML=h;rows.appendChild(r2);
+        });
+      }
+    } else {
+      qids.forEach(function(id,i){
+        var q=QMap[id];var a=S.answers[id];
+        if(!a||a==='__meds_done__'||a==='ok')return;
+        var r3=mk('div','sum-row');r3.style.animationDelay=(i*0.04)+'s';
+        var aText=a;
+        if(q.type==='cardiaclist'){
+          try{var ca=JSON.parse(a);aText=Object.keys(ca).filter(function(k){return ca[k]&&ca[k].ans;}).map(function(k){return k+': '+ca[k].ans+(ca[k].detail?' ('+ca[k].detail+')':'');}).join('; ');}catch(ex){aText=a;}
+        } else if(q.type==='pulmonarylist'||q.type==='neurologicallist'){
+          try{var co=JSON.parse(a);aText=Object.keys(co).filter(function(k){return co[k]&&co[k].checked;}).map(function(k){return k+(co[k].detail?' — '+co[k].detail:'');}).join('; ');}catch(ex){aText=a;}
+        } else if(a==='Yes'&&S.yesDetails[id]){
+          aText+=' — '+S.yesDetails[id];
+        }
+        r3.innerHTML='<span class="sum-q">'+q.text+'</span><span class="sum-a">'+aText+'</span>';
+        rows.appendChild(r3);
+      });
+    }
+    block.appendChild(rows);container.appendChild(block);
+  });
+  var ts=document.getElementById('sumTs');
+  if(ts)ts.textContent='Completed: '+new Date().toLocaleString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function editResponses(){
+  buildSummary();
+  var ss=document.getElementById('sumScreen');
+  if(ss){ss.style.display='';ss.classList.add('show');}
+  speak('To edit your responses, scroll through each section and click the Edit button. When finished, click Proceed to Submit at the bottom of the page.');
+}
+
+// ─── Edit Screen ──────────────────────────────────────────────────────────────
+function openEdit(secId){
+  _currentEditSec=secId;stopSpeaking();
+  var sec=SECTIONS.find(function(s){return s.id===secId;});
+  var ss=document.getElementById('sumScreen');if(ss)ss.classList.remove('show');
+  var et=document.getElementById('editTitle');if(et)et.textContent='Edit: '+(sec?sec.label:secId);
+  var container=document.getElementById('editFields');if(!container)return;container.innerHTML='';
+  var qids=Q.filter(function(q){return q.sec===secId;}).map(function(q){return q.id;});
+
+  if(secId==='meds'){
+    var area2=mk('div','');area2.style.cssText='display:flex;flex-direction:column;gap:12px';
+    var sq=QMap['meds_yn'];var g4=mk('div','edit-field');var lbl4=mk('div','inp-label');lbl4.textContent=sq.text;g4.appendChild(lbl4);
+    var yw=mk('div','yn-wrap');
+    ['Yes','No'].forEach(function(v){
+      var b3=mk('button','yn-btn '+v.toLowerCase());b3.textContent=(v==='Yes'?'✔  Yes':'✖  No');
+      if(S.answers['meds_yn']===v)b3.classList.add('sel');
+      b3.onclick=function(){S.answers['meds_yn']=v;yw.querySelectorAll('.yn-btn').forEach(function(x){x.classList.remove('sel');});b3.classList.add('sel');};
+      yw.appendChild(b3);
+    });
+    g4.appendChild(yw);container.appendChild(g4);
+    renderMedsUI(area2,'meds_list');container.appendChild(area2);
+    var es=document.getElementById('editScreen');if(es){es.style.display='';es.classList.add('show');}
+    return;
+  }
+
+  qids.forEach(function(id){
+    var q=QMap[id];if(S.answered.indexOf(id)<0)return;
+    var g5=mk('div','edit-field');var lbl5=mk('div','inp-label');lbl5.textContent=q.text;g5.appendChild(lbl5);
+    if(q.type==='yn'){
+      var yw2=mk('div','yn-wrap');
+      var edWrap=mk('div','');edWrap.style.display=S.answers[id]==='Yes'?'block':'none';
+      var edLbl=mk('div','inp-label');edLbl.textContent='Please provide more information:';edLbl.style.marginTop='10px';
+      var edTa=document.createElement('textarea');edTa.className='inp';edTa.id='edit_detail_'+id;edTa.style.minHeight='80px';edTa.value=S.yesDetails[id]||'';
+      edWrap.appendChild(edLbl);edWrap.appendChild(edTa);
+      ['Yes','No'].forEach(function(v){
+        var b4=mk('button','yn-btn '+v.toLowerCase());b4.textContent=(v==='Yes'?'✔  Yes':'✖  No');
+        if(S.answers[id]===v)b4.classList.add('sel');
+        b4.onclick=function(){S.answers[id]=v;yw2.querySelectorAll('.yn-btn').forEach(function(x){x.classList.remove('sel');});b4.classList.add('sel');edWrap.style.display=v==='Yes'?'block':'none';if(v==='Yes'){speak('Please provide more information.');setTimeout(function(){edTa.focus();},400);}};
+        yw2.appendChild(b4);
+      });
+      g5.appendChild(yw2);g5.appendChild(edWrap);
+    } else if(q.type==='textarea'){
+      var ta2=document.createElement('textarea');ta2.className='inp tall';ta2.id='edit_'+id;ta2.value=S.answers[id]||'';ta2.placeholder=q.ph||'';g5.appendChild(ta2);
+    } else if(q.type==='choice'){
+      var cw2=mk('div','choice-wrap');
+      q.opts.forEach(function(opt){
+        var b5=mk('button','choice-btn');b5.textContent=opt;
+        if(S.answers[id]===opt)b5.classList.add('sel');
+        b5.onclick=function(){S.answers[id]=opt;cw2.querySelectorAll('.choice-btn').forEach(function(x){x.classList.remove('sel');});b5.classList.add('sel');};
+        cw2.appendChild(b5);
+      });
+      g5.appendChild(cw2);
+    } else if(q.type==='multicheck'){
+      var mcW=mk('div','');mcW.style.cssText='display:flex;flex-direction:column;gap:8px';
+      var selOpts=S.answers[id]?S.answers[id].split(', '):[];
+      (q.opts||[]).forEach(function(opt){
+        var rr=mk('div','');rr.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;cursor:pointer;background:var(--white)';
+        var cbc=document.createElement('input');cbc.type='checkbox';cbc.style.cssText='width:18px;height:18px;accent-color:var(--green);pointer-events:none';cbc.value=opt;
+        cbc.checked=selOpts.indexOf(opt)>=0;
+        if(cbc.checked){rr.style.borderColor='var(--green)';rr.style.background='var(--gpale)';}
+        var ll=mk('span','');ll.textContent=opt;ll.style.fontSize='16px';
+        rr.onclick=function(){cbc.checked=!cbc.checked;rr.style.borderColor=cbc.checked?'var(--green)':'#e0e0e0';rr.style.background=cbc.checked?'var(--gpale)':'var(--white)';};
+        rr.appendChild(cbc);rr.appendChild(ll);mcW.appendChild(rr);
+      });
+      g5.appendChild(mcW);
+      // store back on save via custom attr
+      g5.dataset.mcId=id;
+    } else if(q.type==='cardiaclist'||q.type==='pulmonarylist'||q.type==='neurologicallist'){
+      var note=mk('p','');note.style.cssText='font-size:14px;color:var(--ink3);font-style:italic';note.textContent='To edit this section in detail, please use the Back button and re-answer the question.';g5.appendChild(note);
+    } else {
+      var i4=mkInp('text',q.ph||'');i4.id='edit_'+id;i4.value=S.answers[id]||'';g5.appendChild(i4);
+    }
+    container.appendChild(g5);
+  });
+  var es2=document.getElementById('editScreen');if(es2){es2.style.display='';es2.classList.add('show');}
+}
+
+function saveEdit(){
+  var qids=Q.filter(function(q){return q.sec===_currentEditSec;}).map(function(q){return q.id;});
+  var blocked=false;
+  qids.forEach(function(id){
+    var q=QMap[id];
+    // multicheck: collect checked values from edit UI
+    var mcG=document.querySelector('[data-mc-id="'+id+'"]');
+    if(mcG){
+      var chks=mcG.querySelectorAll('input[type=checkbox]:checked');
+      S.answers[id]=Array.from(chks).map(function(c){return c.value;}).join(', ');
+      return;
+    }
+    var el=document.getElementById('edit_'+id);if(el)S.answers[id]=el.value.trim()||S.answers[id];
+    var del=document.getElementById('edit_detail_'+id);
+    if(del){var dv=del.value.trim();if(S.answers[id]==='Yes'&&!dv&&q&&!q.noDetail){del.style.borderColor='var(--red)';del.focus();speak('Please provide additional information for questions you answered Yes to before saving.');blocked=true;return;}if(dv)S.yesDetails[id]=dv;}
+  });
+  if(!blocked)backToSummary();
+}
+
+function backToSummary(){
+  var es=document.getElementById('editScreen');if(es){es.classList.remove('show');es.style.display='';}
+  buildSummary();
+  var ss=document.getElementById('sumScreen');if(ss){ss.style.display='';ss.classList.add('show');}
+  _currentEditSec=null;
+}
+
+function goToSubmit(){
+  var ss=document.getElementById('sumScreen');if(ss){ss.classList.remove('show');ss.style.display='none';}
+  var sub=document.getElementById('submitScreen');if(sub){sub.style.display='';sub.classList.add('show');}
+  speak('One last question. Would you like a password-protected PDF copy of your responses? Please select yes or no below.');
+}
+
+function backFromSubmit(){
+  var sub=document.getElementById('submitScreen');if(sub){sub.classList.remove('show');sub.style.display='none';}
+  var ss=document.getElementById('sumScreen');if(ss){ss.style.display='';ss.classList.add('show');}
+}
+
+function handlePdfChoice(wantsPdf){
+  _wantsPdf=wantsPdf;
+  var pw=document.getElementById('pdfOptsWrap');var nw=document.getElementById('noEmailWrap');
+  var yb=document.getElementById('pdfYesBtn');var nb=document.getElementById('pdfNoBtn');
+  if(yb){yb.style.fontWeight=wantsPdf?'800':'600';if(wantsPdf)yb.classList.add('sel');else yb.classList.remove('sel');}
+  if(nb){nb.style.fontWeight=!wantsPdf?'800':'600';if(!wantsPdf)nb.classList.add('sel');else nb.classList.remove('sel');}
+  if(pw)pw.style.display=wantsPdf?'block':'none';
+  if(nw)nw.style.display=!wantsPdf?'block':'none';
+  if(wantsPdf){speak('Please enter your email address for a confirmation receipt, and create a 4-digit PIN. Your PDF will be locked with this PIN so write it down.');setTimeout(function(){var em=document.getElementById('clientEmail');if(em)em.focus();},600);}
+  else{speak('No problem. Last step, please click Submit to Agent below.');}
+}
+
+function submitInterview(){
+  var errEl=document.getElementById('submitErr');if(errEl)errEl.style.display='none';
+  var emailEl=_wantsPdf?document.getElementById('clientEmail'):document.getElementById('clientEmailNopdf');
+  var email=emailEl?(emailEl.value||'').trim():'';
+  if(_wantsPdf){
+    var pinEl=document.getElementById('clientPin');var pin=(pinEl?pinEl.value:'').trim();
+    if(!pin||pin.length!==4){if(errEl){errEl.textContent='Please enter a valid 4-digit PIN.';errEl.style.display='block';}speak('Please enter a 4-digit PIN to protect your PDF.');if(pinEl)pinEl.focus();return;}
+    _origPin=pin;
+    if(email){var rx=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;if(!rx.test(email)){if(errEl){errEl.textContent='Please enter a valid email address.';errEl.style.display='block';}speak('Please enter a valid email address.');if(emailEl){emailEl.style.borderColor='var(--red)';emailEl.focus();}return;}}
+  }
+  var btn=document.getElementById('submitBtn');if(btn){btn.textContent='Submitting...';btn.disabled=true;}
+  function showTY(){
+    var sub=document.getElementById('submitScreen');if(sub){sub.classList.remove('show');sub.style.display='none';}
+    var ty=document.getElementById('tyScreen');if(ty){ty.style.display='';ty.classList.add('show');}
+    if(email){var ta3=document.getElementById('tyEmailAddr');if(ta3)ta3.textContent=email;var tc=document.getElementById('tyEmailConfirm');if(tc)tc.style.display='block';}
+    if(_wantsPdf){var tp=document.getElementById('tyPdfWrap');if(tp)tp.style.display='block';}
+    var firstName=S.introFirstName||'';
+    speak('Thank you'+(firstName?', '+firstName:'')+' for completing the questionnaire. You have successfully submitted your responses. Your agent will review your responses and get back to you shortly. You may now close this page.');
+  }
+  sendEmailJS(email,function(){
+    if(_wantsPdf){generatePdf(_origPin,function(){showTY();});}else showTY();
+  },function(){
+    if(_wantsPdf){generatePdf(_origPin,function(){showTY();});}else showTY();
+  });
+}
+
+// ─── Email / PDF ──────────────────────────────────────────────────────────────
+function buildEmailSummary(){
+  var lines=[];var fn4=S.introFirstName||'';var ln4=S.introLastName||'';
+  lines.push('SUBMISSION DATE: '+new Date().toLocaleString());
+  lines.push('CLIENT: '+fn4+' '+ln4);lines.push('');
+  SECTIONS.forEach(function(sec){
+    var qids2=S.answered.filter(function(id){return QMap[id]&&QMap[id].sec===sec.id;});if(!qids2.length)return;
+    lines.push('=== '+sec.label+' ===');
+    if(sec.id==='meds'){
+      lines.push('Taking medications: '+(S.answers['meds_yn']||''));
+      if(S.answers['meds_yn']==='Yes')S.medications.forEach(function(med,i){if(!med.name)return;lines.push('  Med '+(i+1)+': '+med.name+' | '+(med.dosage||'')+' | '+(med.duration||'')+' | '+(med.condition||''));});
+    } else {
+      qids2.forEach(function(id){
+        var q2=QMap[id];var a2=S.answers[id];
+        if(!a2||a2==='__meds_done__'||a2==='ok')return;
+        lines.push(q2.text+': '+a2);
+        if(a2==='Yes'&&S.yesDetails[id])lines.push('  Details: '+S.yesDetails[id]);
+      });
+    }
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+
+function sendEmailJS(clientEmail,onSuccess,onError){
+  var summary2=buildEmailSummary();var fn5=S.introFirstName||'';var ln5=S.introLastName||'';
+  var fullName=fn5+' '+ln5;var date2=new Date().toLocaleString();
+  var agentParams={to_name:'Andrew Waller',from_name:fullName,client_name:fullName,client_email:clientEmail||'Not provided',summary:summary2,submission_date:date2};
+  emailjs.send('service_orh1mdw','template_de6smfq',agentParams)
+    .then(function(){
+      if(clientEmail){
+        var clientParams={to_name:fullName,from_name:'LTC Specialists',client_name:fullName,client_email:clientEmail,summary:'Your responses have been securely submitted to your agent. If you requested a PDF copy, please use the download link and your PIN to access your responses.',submission_date:date2};
+        return emailjs.send('service_orh1mdw','template_fkg4nhk',clientParams);
+      }
+      return Promise.resolve();
+    })
+    .then(function(){onSuccess();})
+    .catch(function(err){console.warn('EmailJS error:',err);onSuccess();});
+}
+
+function buildPdfContent(){
+  var lines2=[];var fn6=S.introFirstName||'';var ln6=S.introLastName||'';
+  lines2.push('LTC SPECIALISTS - Long-Term Care Pre-Screening');
+  lines2.push('Client: '+fn6+' '+ln6);lines2.push('Submitted: '+new Date().toLocaleString());
+  lines2.push('');lines2.push('='.repeat(50));lines2.push('');
+  SECTIONS.forEach(function(sec){
+    var qids3=S.answered.filter(function(id){return QMap[id]&&QMap[id].sec===sec.id;});if(!qids3.length)return;
+    lines2.push(sec.label);lines2.push('-'.repeat(40));
+    if(sec.id==='meds'){
+      lines2.push('Taking medications: '+(S.answers['meds_yn']||''));
+      if(S.answers['meds_yn']==='Yes')S.medications.forEach(function(med,i){if(!med.name)return;lines2.push('');lines2.push('Medication '+(i+1)+': '+med.name);lines2.push('  Dosage: '+(med.dosage||'N/A'));lines2.push('  Duration: '+(med.duration||'N/A'));lines2.push('  Condition: '+(med.condition||'N/A'));});
+    } else {
+      qids3.forEach(function(id){
+        var q3=QMap[id];var a3=S.answers[id];
+        if(!a3||a3==='__meds_done__'||a3==='ok')return;
+        lines2.push('');lines2.push('Q: '+q3.text);lines2.push('A: '+a3);
+        if(a3==='Yes'&&S.yesDetails[id])lines2.push('   Details: '+S.yesDetails[id]);
+      });
+    }
+    lines2.push('');
+  });
+  lines2.push('='.repeat(50));lines2.push('Confidential - LTC Specialists');
+  return lines2;
+}
+
+function _buildPdfDoc(useEncryption, pin){
+  var opts = {orientation:'portrait',unit:'mm',format:'a4'};
+  if(useEncryption && pin){
+    opts.encryption = {userPassword:pin,ownerPassword:pin+'ltc',userPermissions:['print','copy']};
+  }
+  var doc=new window.jspdf.jsPDF(opts);
+  var plines=buildPdfContent();var margin=20;var y=32;
+  var pageH=doc.internal.pageSize.getHeight();var pageW=doc.internal.pageSize.getWidth();
+  doc.setFillColor(34,57,94);doc.rect(0,0,pageW,22,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(14);doc.setFont('helvetica','bold');doc.text('LTC SPECIALISTS',margin,14);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Long-Term Care Pre-Screening - Confidential',margin,20);
+  doc.setTextColor(30,30,30);doc.setFontSize(10);
+  plines.slice(3).forEach(function(line){
+    if(y>pageH-20){doc.addPage();y=20;}
+    if(!line){y+=4;return;}
+    if(line.startsWith('===')){doc.setDrawColor(133,178,52);doc.line(margin,y,pageW-margin,y);y+=6;return;}
+    if(line.startsWith('---')){doc.setDrawColor(200,200,200);doc.line(margin,y,pageW-margin,y);y+=5;return;}
+    if(line===line.toUpperCase()&&line.length>3&&!line.startsWith('Q:')&&!line.startsWith('A:')){doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(133,178,52);doc.text(line,margin,y);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(30,30,30);y+=7;return;}
+    if(line.startsWith('Q: ')){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(60,60,60);var w=doc.splitTextToSize(line,pageW-margin*2);doc.text(w,margin,y);y+=w.length*5;doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);return;}
+    if(line.startsWith('A: ')){doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(133,178,52);var aw=doc.splitTextToSize(line,pageW-margin*2);doc.text(aw,margin,y);y+=aw.length*5+2;doc.setFont('helvetica','normal');doc.setTextColor(30,30,30);return;}
+    doc.setFontSize(9);var w2=doc.splitTextToSize(line,pageW-margin*2);doc.text(w2,margin,y);y+=w2.length*5;
+  });
+  var tp=doc.internal.getNumberOfPages();
+  for(var p=1;p<=tp;p++){doc.setPage(p);doc.setFontSize(8);doc.setTextColor(150,150,150);doc.text('LTC Specialists - Confidential | Page '+p+' of '+tp,margin,pageH-8);}
+  return doc;
+}
+
+function generatePdf(pin,onDone){
+  // Try with encryption first; if it fails (some browsers block it), fall back to unencrypted
+  try{
+    var doc=_buildPdfDoc(true, pin);
+    var bytes=doc.output('arraybuffer');
+    if(!bytes||bytes.byteLength<100) throw new Error('Empty PDF');
+    _pdfBytes=bytes;
+    _pdfEncrypted=true;
+    onDone(true);
+  }catch(err){
+    console.warn('Encrypted PDF failed, trying unencrypted:',err);
+    try{
+      var doc2=_buildPdfDoc(false, null);
+      var bytes2=doc2.output('arraybuffer');
+      _pdfBytes=bytes2;
+      _pdfEncrypted=false;
+      onDone(true);
+    }catch(err2){
+      console.warn('PDF generation failed entirely:',err2);
+      _pdfBytes=null;
+      onDone(false);
+    }
+  }
+}
+
+function downloadPdf(){
+  if(!_pdfBytes){
+    // Try regenerating if it somehow got lost
+    if(_origPin){
+      generatePdf(_origPin,function(ok){
+        if(ok&&_pdfBytes) downloadPdf();
+        else alert('Sorry, there was a problem generating your PDF. Your responses were already submitted to your agent.');
+      });
+    } else {
+      alert('Sorry, there was a problem generating your PDF. Your responses were already submitted to your agent.');
+    }
+    return;
+  }
+  var blob=new Blob([_pdfBytes],{type:'application/pdf'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;
+  var fn7=S.introFirstName||'client';
+  a.download='LTC-PreScreening-'+fn7+'-'+new Date().toLocaleDateString('en-US').replace(/\//g,'-')+'.pdf';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  if(!_pdfEncrypted){
+    setTimeout(function(){
+      alert('Note: Your PDF was generated without password protection (your browser does not support PDF encryption). Please keep it secure.');
+    },500);
+  }
+}
+
+// ─── Utility helpers ──────────────────────────────────────────────────────────
+function mk(tag,cls){var el=document.createElement(tag);if(cls)el.className=cls;return el;}
+function mkInp(type,ph){var i=mk('input','inp');i.type=type;i.placeholder=ph||'';return i;}
+function contBtn(){var b=mk('button','cont-btn');b.textContent='Continue';return b;}
+function backBtn(){
+  var b=mk('button','back-btn');b.textContent='Back';
+  b.onclick=function(){
+    if(S.answered.length>0){
+      var p=S.answered[S.answered.length-1];
+      S.answered.pop();
+      delete S.answers[p];
+      if(S.yesDetails)delete S.yesDetails[p];
+      showQ(p);
+    }
+  };
+  return b;
+}
+
+window.addEventListener('load',function(){
+  if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=function(){window.speechSynthesis.getVoices();};}
+});
+</script>
+</body>
+</html>
