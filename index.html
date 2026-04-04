@@ -614,7 +614,13 @@ function showQ(id){
       if(badge)badge.textContent=sec?sec.label:q.sec;
       el.textContent=(q.type==='section'?'':q.text); el.classList.remove('fade');
       renderAnswer(q);
-      speak(q.speak||q.text);
+      if(_pendingMilestone){
+        // Play milestone THEN speak the question — no overlap possible
+        var m=_pendingMilestone; _pendingMilestone=null;
+        _playMilestone(m, function(){ speak(q.speak||q.text); });
+      } else {
+        speak(q.speak||q.text);
+      }
     },200);
   }
 }
@@ -624,7 +630,7 @@ function proceedAns(id,val){
   S.answers[id]=val;
   if(S.answered.indexOf(id)<0)S.answered.push(id);
   updateProg();
-  checkMilestone();
+  _checkMilestonePending(); // just sets flag, doesn't speak yet
   var q=QMap[id]; var nextId=q.next(val);
   if(nextId&&QMap[nextId])showQ(nextId); else endInterview();
 }
@@ -639,29 +645,43 @@ function updateProg(){
   var pp=document.getElementById('progPct');if(pp)pp.textContent=pct+'% Complete';
 }
 
-function checkMilestone(){
+var _pendingMilestone = null;
+
+function _checkMilestonePending(){
+  // Called after answer submitted — just records if a milestone was reached, doesn't speak yet
   var total=Q.length,done=S.answered.length,pct=Math.round(done/total*100);
   var milestones=[25,50,75];
   milestones.forEach(function(m){
     if(pct>=m && _lastMilestonePct<m){
       _lastMilestonePct=m;
-      var msg='';
-      if(m===25) msg="Great job! You're one quarter of the way through. Keep it up!";
-      if(m===50) msg="Wonderful, you're halfway there! You're doing great.";
-      if(m===75) msg="Excellent work! You're three quarters done. Almost there!";
-      playFanfare(function(){
-        var dot=document.getElementById('msDot'+m);if(dot)dot.classList.add('reached');
-        var badge=document.getElementById('milestoneBadge');
-        if(badge){
-          badge.innerHTML='🎉 '+m+'% Complete!';
-          badge.style.cssText='display:block;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:var(--green);color:#fff;font-family:Outfit,sans-serif;font-size:20px;font-weight:700;padding:18px 36px;border-radius:50px;box-shadow:0 8px 40px rgba(133,178,52,.5);z-index:9999;text-align:center;animation:milestone-pop .5s ease forwards';
-          setTimeout(function(){badge.style.animation='milestone-fade 1s ease forwards';setTimeout(function(){badge.style.display='none';},1000);},2500);
-        }
-        if(msg) speak(msg);
-      });
+      _pendingMilestone=m; // will be played after next question finishes speaking
     }
   });
 }
+
+function _playMilestone(m, afterCb){
+  // Play fanfare + badge + voice, then call afterCb when all done
+  var msg='';
+  if(m===25) msg="Great job! You're one quarter of the way through. Keep it up!";
+  if(m===50) msg="Wonderful, you're halfway there! You're doing great.";
+  if(m===75) msg="Excellent work! You're three quarters done. Almost there!";
+  var dot=document.getElementById('msDot'+m);if(dot)dot.classList.add('reached');
+  var badge=document.getElementById('milestoneBadge');
+  if(badge){
+    badge.innerHTML='🎉 '+m+'% Complete!';
+    badge.style.cssText='display:block;position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);background:var(--green);color:#fff;font-family:Outfit,sans-serif;font-size:20px;font-weight:700;padding:18px 36px;border-radius:50px;box-shadow:0 8px 40px rgba(133,178,52,.5);z-index:9999;text-align:center;animation:milestone-pop .5s ease forwards';
+    setTimeout(function(){badge.style.animation='milestone-fade 1s ease forwards';setTimeout(function(){badge.style.display='none';},1000);},2500);
+  }
+  playFanfare(function(){
+    if(msg){
+      speak(msg, function(){ if(afterCb) afterCb(); });
+    } else {
+      if(afterCb) afterCb();
+    }
+  });
+}
+
+function checkMilestone(){ _checkMilestonePending(); } // kept for compat
 
 // ─── renderAnswer ──────────────────────────────────────────────────────────────
 function renderAnswer(q){
