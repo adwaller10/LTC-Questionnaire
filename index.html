@@ -653,11 +653,17 @@ function countRemainingPath(fromId){
 
 function updateProg(){
   var done=S.answered.length;
-  // Estimate total as steps done + steps remaining from current question
-  var remaining = S.currentId ? countRemainingPath(S.currentId) : 1;
+  // Count remaining steps from NEXT question (current not yet answered)
+  // so progress reflects steps completed out of reachable total
+  var remaining = 1; // at least 1 (the current question)
+  if(S.currentId && QMap[S.currentId]){
+    try{
+      var nextId = QMap[S.currentId].next('No');
+      remaining = 1 + (nextId ? countRemainingPath(nextId) : 0);
+    }catch(e){ remaining = 1; }
+  }
   var total = done + remaining;
   var pct = total>0 ? Math.round(done/total*100) : 0;
-  // Cap at 99% until actually finished
   if(pct>=100) pct=99;
   var pf=document.getElementById('progFill');if(pf)pf.style.width=pct+'%';
   var pl=document.getElementById('progLbl');if(pl)pl.textContent='Step '+(done+1);
@@ -669,7 +675,10 @@ var _pendingMilestone = null;
 function _checkMilestonePending(){
   // Called after answer submitted — uses same dynamic calculation as the progress bar
   var done=S.answered.length;
-  var remaining=S.currentId?countRemainingPath(S.currentId):1;
+  var remaining=1;
+  if(S.currentId&&QMap[S.currentId]){
+    try{var nid=QMap[S.currentId].next('No');remaining=1+(nid?countRemainingPath(nid):0);}catch(e){}
+  }
   var total=done+remaining;
   var pct=total>0?Math.round(done/total*100):0;
   var milestones=[25,50,75];
