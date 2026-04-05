@@ -592,7 +592,8 @@ function startInterview(){
   document.getElementById('introScreen').style.display='none';
   document.getElementById('ivScreen').style.display='block';
   var fn=S.introFirstName;
-  speak("Wonderful"+(fn?', '+fn:'')+". Let's get started.",function(){showQ(Q[0].id);});
+  var _greet=fn?"Great, let's get started, "+fn+"!":"Great, let's get started!";
+  speak(_greet,function(){showQ(Q[0].id);});
 }
 
 function showQ(id){
@@ -638,18 +639,39 @@ function proceedAns(id,val){
 function submitAns(id,val){proceedAns(id,val);}
 
 var _lastMilestonePct = 0;
+function countRemainingPath(fromId){
+  // Walk forward from current question to count how many steps remain
+  var visited={};var count=0;var id=fromId;
+  while(id&&QMap[id]&&!visited[id]&&count<200){
+    visited[id]=true;count++;
+    var q=QMap[id];
+    // Use 'No' as the default branch for counting (shortest path = minimum remaining)
+    try{ id=q.next('No'); }catch(e){ break; }
+  }
+  return count;
+}
+
 function updateProg(){
-  var total=Q.length,done=S.answered.length,pct=Math.round(done/total*100);
+  var done=S.answered.length;
+  // Estimate total as steps done + steps remaining from current question
+  var remaining = S.currentId ? countRemainingPath(S.currentId) : 1;
+  var total = done + remaining;
+  var pct = total>0 ? Math.round(done/total*100) : 0;
+  // Cap at 99% until actually finished
+  if(pct>=100) pct=99;
   var pf=document.getElementById('progFill');if(pf)pf.style.width=pct+'%';
-  var pl=document.getElementById('progLbl');if(pl)pl.textContent='Step '+(done+1)+' of '+total;
+  var pl=document.getElementById('progLbl');if(pl)pl.textContent='Step '+(done+1);
   var pp=document.getElementById('progPct');if(pp)pp.textContent=pct+'% Complete';
 }
 
 var _pendingMilestone = null;
 
 function _checkMilestonePending(){
-  // Called after answer submitted — just records if a milestone was reached, doesn't speak yet
-  var total=Q.length,done=S.answered.length,pct=Math.round(done/total*100);
+  // Called after answer submitted — uses same dynamic calculation as the progress bar
+  var done=S.answered.length;
+  var remaining=S.currentId?countRemainingPath(S.currentId):1;
+  var total=done+remaining;
+  var pct=total>0?Math.round(done/total*100):0;
   var milestones=[25,50,75];
   milestones.forEach(function(m){
     if(pct>=m && _lastMilestonePct<m){
@@ -1109,6 +1131,10 @@ function formatDOB(raw){
 // ─── End / Summary ────────────────────────────────────────────────────────────
 function endInterview(){
   stopSpeaking();
+  // Set progress to 100% on completion
+  var pf=document.getElementById('progFill');if(pf)pf.style.width='100%';
+  var pp=document.getElementById('progPct');if(pp)pp.textContent='100% Complete';
+  var dot=document.getElementById('msDot75');if(dot)dot.classList.add('reached');
   // Play completion fanfare then show summary
   playFanfare(function(){
     var badge=document.getElementById('milestoneBadge');
