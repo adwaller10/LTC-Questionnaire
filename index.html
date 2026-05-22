@@ -190,18 +190,34 @@
     <!-- INTRO SCREEN -->
     <div class="intro" id="introScreen" style="display:none">
       <h2>Hello, <span id="greetName"></span>!</h2>
-      <p class="sub">This is a confidential medical history pre-screening interview &mdash; <strong>not an insurance application</strong>. We need to learn about your health history so we can determine your insurability for long-term care coverage and identify the best options for your needs. Please answer every question as accurately and completely as possible, and think specifically about what is likely in your medical records.</p>
+      <p class="sub">This is a confidential medical history pre-screening interview &mdash; <strong>not an insurance application</strong>.</p>
+      <p class="sub">The purpose of this questionnaire is to help us understand your health history so we can determine whether you are likely to qualify for long-term care insurance and, if so, identify the coverage options that best fit your needs and budget.</p>
+      <p class="sub">This is where our expertise matters. We do not simply take applications and submit them to insurers without first doing the legwork. A declined application can make it significantly more difficult &mdash; and sometimes nearly impossible &mdash; to qualify with another long-term care insurance provider in the future.</p>
+      <p class="sub">Instead, we review your confidential health profile up front. If you appear to be a good candidate, we use our knowledge of the marketplace and our relationships with insurers to identify which carriers may be the best fit. When appropriate, we may seek preliminary guidance or conditional feedback using only your general health information &mdash; without sharing personally identifiable information unless and until you decide to formally apply.</p>
+      <p class="sub">For that reason, it is extremely important that you answer each question as completely and accurately as possible. Please think specifically about what is likely to appear in your medical records, because insurers will review those records if you decide to apply for coverage. Omitting information that later appears in your records can negatively affect your chances of being approved.</p>
+      <p class="sub">Your responses are confidential and will be used solely by us to evaluate your long-term care insurability and coverage options. By proceeding, you consent to your completed questionnaire being sent securely to your agent.</p>
       <div class="info-grid">
         <div class="info-card"><div class="ic-icon">&#9201;</div><div class="ic-lbl">Duration</div><div class="ic-val">15&ndash;20 min</div></div>
         <div class="info-card"><div class="ic-icon">&#128203;</div><div class="ic-lbl">Sections</div><div class="ic-val">12 topics</div></div>
         <div class="info-card"><div class="ic-icon">&#9999;</div><div class="ic-lbl">Editable</div><div class="ic-val">Review before submit</div></div>
         <div class="info-card"><div class="ic-icon">&#128274;</div><div class="ic-lbl">Privacy</div><div class="ic-val">Confidential</div></div>
       </div>
-      <div class="priv">
-        <span style="font-size:18px;flex-shrink:0">&#128274;</span>
-        <span>Your responses are confidential and used solely to evaluate your long-term care coverage options. By proceeding you consent to your completed questionnaire being sent securely to your agent.</span>
+
+      <div class="priv" id="introConsentBox" style="display:block;margin-top:18px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="font-size:18px;flex-shrink:0">&#9997;</span>
+          <div style="flex:1">
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.55;color:var(--ink2);margin-bottom:12px">
+              <input type="checkbox" id="introConsentChk" style="margin-top:3px;transform:scale(1.15)">
+              <span>I have read and understand the explanation above, and I agree that my completed questionnaire may be sent securely to my agent for review.</span>
+            </label>
+            <label class="inp-label" for="introInitials">Please type your initials to continue</label>
+            <input type="text" class="inp" id="introInitials" placeholder="Initials" maxlength="6" style="max-width:160px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase(); document.getElementById('consentErr').style.display='none';">
+            <div id="consentErr" style="display:none;color:var(--red);font-size:14px;font-weight:600;margin-top:8px">Please check the box and enter your initials before continuing.</div>
+          </div>
+        </div>
       </div>
-      <button class="start-btn" onclick="startInterview()">Begin Pre-Screening</button>
+      <button class="start-btn" onclick="startInterviewWithConsent()">Begin Pre-Screening</button>
     </div>
 
     <!-- INTERVIEW SCREEN -->
@@ -261,7 +277,7 @@
         <div id="pdfOptsWrap" style="display:none">
           <div class="inp-group" style="margin-bottom:12px">
             <label class="inp-label">Your Email <span style="font-weight:400;color:var(--ink3)">(confirmation receipt)</span></label>
-            <input type="email" class="inp" id="clientEmail" placeholder="your@email.com">
+            <input type="email" class="inp" id="clientEmail" placeholder="Enter your email address">
           </div>
           <div class="inp-group" style="margin-bottom:8px">
             <label class="inp-label">Create a 4-digit PIN <span style="font-weight:400;color:var(--ink3)">(to open your PDF)</span></label>
@@ -271,8 +287,8 @@
         </div>
         <div id="noEmailWrap" style="display:none">
           <div class="inp-group">
-            <label class="inp-label">Your Email <span style="font-weight:400;color:var(--ink3)">(optional &mdash; confirmation only)</span></label>
-            <input type="email" class="inp" id="clientEmailNopdf" placeholder="your@email.com">
+            <label class="inp-label">Your Email Address <span style="font-weight:400;color:var(--ink3)">(required for confirmation and secure delivery)</span></label>
+            <input type="email" class="inp" id="clientEmailNopdf" oninput="this.style.borderColor='';var e=document.getElementById('submitErr');if(e)e.style.display='none';" placeholder="Enter your email address">
           </div>
         </div>
       </div>
@@ -342,7 +358,9 @@ var Q = [
   // ── Medications ────────────────────────────────────────────────────
   {id:'bridge_meds', sec:'meds', type:'section', text:'Medication History',                                   speak:"Now let's go over your medication history.",                                             next:function(){ return 'meds_yn'; }},
   {id:'meds_yn',    sec:'meds', type:'yn',       text:'Are you currently taking any prescription medications?', speak:'Are you currently taking any prescription medications?',                                noDetail:true, next:function(a){ return a==='Yes'?'meds_list':'bridge_musculo'; }},
-  {id:'meds_list',  sec:'meds', type:'medications', text:'Please list all medications taken in the last 12 months.', speak:'Please provide details for each medication you have taken in the last 12 months.', next:function(){ return 'bridge_musculo'; }},
+  {id:'meds_list',  sec:'meds', type:'medications', text:'Please list all medications taken in the last 12 months.', speak:'Please provide details for each medication you have taken in the last 12 months.', next:function(){ return 'med_dosage_changes'; }},
+  {id:'med_dosage_changes', sec:'meds', type:'yn', text:'Have there been any changes to your medication dosages in the past 12 months?', speak:'Have there been any changes to your medication dosages in the past 12 months?', detailPrompt:'Please list the medication, what you are taking it for, your previous dosage, the current dosage, and the reason for the change.', next:function(){ return 'med_prescribed_not_taking'; }},
+  {id:'med_prescribed_not_taking', sec:'meds', type:'yn', text:'Are there any medications that have been prescribed in the past 12 months that you did not take, or are no longer taking?', speak:'Are there any medications that have been prescribed in the past 12 months that you did not take, or are no longer taking?', detailPrompt:'Please list the medication, when it was prescribed, what it was for, and why you never took it or why you are no longer taking it.', next:function(){ return 'bridge_musculo'; }},
 
   // ── Musculoskeletal ────────────────────────────────────────────────
   {id:'bridge_musculo', sec:'musculo', type:'section', text:'Musculoskeletal / Orthopedic Health',             speak:'Now some questions about your musculoskeletal and orthopedic health.',                    next:function(){ return 'ms_ortho'; }},
@@ -411,8 +429,8 @@ var Q = [
 
   // ── Cancer ─────────────────────────────────────────────────────────
   {id:'bridge_cancer',  sec:'cancer', type:'section', text:'Cancer & Related Conditions',                      speak:'Now some questions about cancer and related conditions.',                                 next:function(){ return 'ca_ever'; }},
-  {id:'ca_ever',        sec:'cancer', type:'yn',      text:'Have you ever been diagnosed with cancer?',         speak:'Have you ever been diagnosed with cancer?',                                              next:function(a){ return a==='Yes'?'ca_detail':'ca_nodules'; }},
-  {id:'ca_detail',      sec:'cancer', type:'textarea', text:'Please describe the type, date of diagnosis, treatment received, and current status.', speak:'Please describe the type of cancer, the date of diagnosis, treatment received, and your current status.', ph:'e.g., Breast cancer, diagnosed 2019, chemotherapy and surgery, currently in remission', req:true, next:function(){ return 'ca_nodules'; }},
+  {id:'ca_ever',        sec:'cancer', type:'yn',      text:'Have you ever been diagnosed with cancer?',         speak:'Have you ever been diagnosed with cancer?',                                              noDetail:true, next:function(a){ return a==='Yes'?'ca_detail':'ca_nodules'; }},
+  {id:'ca_detail',      sec:'cancer', type:'textarea', text:'Please describe the type of cancer, date of diagnosis, stage if known, treatment received, and current status.', speak:'Please describe the type of cancer, date of diagnosis, stage if known, treatment received, and current status.', ph:'e.g., Breast cancer, diagnosed 2019, chemotherapy and surgery, currently in remission', req:true, next:function(){ return 'ca_nodules'; }},
   // FIX 14: nodules noDetail=true, goes straight to describe step
   {id:'ca_nodules',        sec:'cancer', type:'yn',       text:'Are you currently being monitored for nodules on the lungs or other organs?', speak:'Are you currently being monitored for nodules on the lungs or any other organs?', noDetail:true, next:function(a){ return a==='Yes'?'ca_nodules_detail':'bridge_autoimmune'; }},
   {id:'ca_nodules_detail', sec:'cancer', type:'textarea', text:'Please describe the location of the nodules and the follow-up plan.',         speak:'Please describe the location of the nodules and the current follow-up plan.',         ph:'e.g., Lung nodule found 2023, 6mm, annual CT scan monitoring', req:true, next:function(){ return 'bridge_autoimmune'; }},
@@ -476,21 +494,59 @@ function stopSpeaking(){
   _speakGen++; setSpk(false);
 }
 
+var _browserVoice = null;
+
+function getPreferredBrowserVoice(){
+  var voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  if(!voices || !voices.length) return null;
+
+  // Prefer fuller, natural-sounding English voices and keep the same one throughout.
+  var pref = [
+    'Microsoft Jenny', 'Microsoft Aria', 'Google US English',
+    'Samantha', 'Karen', 'Susan', 'Zira', 'Jenny', 'Aria',
+    'Joanna', 'Salli'
+  ];
+
+  for(var i=0;i<pref.length;i++){
+    var picked = voices.find(function(v){ return v.name.indexOf(pref[i]) >= 0; });
+    if(picked) return picked;
+  }
+
+  return voices.find(function(v){ return v.lang === 'en-US'; }) || voices[0] || null;
+}
+
 function speakBrowser(text,cb){
-  if(!window.speechSynthesis){if(cb)cb();return;}
-  window.speechSynthesis.cancel();
-  var u=new SpeechSynthesisUtterance(text);
-  u.rate=0.92;u.pitch=1.05;u.volume=1.0;
-  var voices=window.speechSynthesis.getVoices();
-  var pref=['Samantha','Karen','Zira','Susan','Aria','Jenny','Salli','Joanna'];
-  var picked=null;
-  for(var i=0;i<pref.length;i++){picked=voices.find(function(v){return v.name.indexOf(pref[i])>=0;});if(picked)break;}
-  if(!picked)picked=voices.find(function(v){return v.lang==='en-US';});
-  if(picked)u.voice=picked;
-  u.onend=function(){setSpk(false);if(cb)cb();};
-  u.onerror=function(){setSpk(false);if(cb)cb();};
-  setSpk(true);
-  window.speechSynthesis.speak(u);
+  if(!window.speechSynthesis){ if(cb)cb(); return; }
+
+  function doSpeak(){
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+
+    // Slower, lower, steadier fallback voice so it does not suddenly sound fast/high.
+    u.rate = 0.78;
+    u.pitch = 0.88;
+    u.volume = 1.0;
+
+    if(!_browserVoice) _browserVoice = getPreferredBrowserVoice();
+    if(_browserVoice) u.voice = _browserVoice;
+
+    u.onend = function(){ setSpk(false); if(cb)cb(); };
+    u.onerror = function(){ setSpk(false); if(cb)cb(); };
+
+    setSpk(true);
+    window.speechSynthesis.speak(u);
+  }
+
+  var voices = window.speechSynthesis.getVoices();
+  if(!voices || !voices.length){
+    window.speechSynthesis.onvoiceschanged = function(){
+      window.speechSynthesis.onvoiceschanged = null;
+      doSpeak();
+    };
+    setTimeout(doSpeak, 250);
+  } else {
+    doSpeak();
+  }
 }
 
 function speak(text,cb){
@@ -583,9 +639,25 @@ function clickNext(){
     document.getElementById('ivPanel').style.display='flex';
     document.getElementById('introScreen').style.display='block';
     setTimeout(function(){
-      speak('Hello '+fn+'! This is a confidential medical history pre-screening interview, not an insurance application. We need to learn about your health history so we can determine your insurability for long-term care coverage and identify the best options for your needs. Please answer every question as accurately and completely as possible, and think specifically about what is likely in your medical records. When you are ready, click Begin Pre-Screening to get started.');
+      speak('Hello '+fn+'! This is a confidential medical history pre-screening interview, not an insurance application. The purpose of this questionnaire is to help us understand your health history so we can determine whether you are likely to qualify for long-term care insurance and, if so, identify the coverage options that best fit your needs and budget. This is where our expertise matters. We do not simply take applications and submit them to insurers without first doing the legwork. A declined application can make it significantly more difficult, and sometimes nearly impossible, to qualify with another long-term care insurance provider in the future. Instead, we review your confidential health profile up front. If you appear to be a good candidate, we use our knowledge of the marketplace and our relationships with insurers to identify which carriers may be the best fit. When appropriate, we may seek preliminary guidance or conditional feedback using only your general health information, without sharing personally identifiable information unless and until you decide to formally apply. For that reason, it is extremely important that you answer each question as completely and accurately as possible. Please think specifically about what is likely to appear in your medical records, because insurers will review those records if you decide to apply for coverage. Omitting information that later appears in your records can negatively affect your chances of being approved. Your responses are confidential and will be used solely by us to evaluate your long-term care insurability and coverage options. By proceeding, you consent to your completed questionnaire being sent securely to your agent. When you are ready, check the consent box, enter your initials, and click Begin Pre-Screening to get started.');
     },300);
   });
+}
+
+
+function startInterviewWithConsent(){
+  var chk = document.getElementById('introConsentChk');
+  var initials = document.getElementById('introInitials');
+  var err = document.getElementById('consentErr');
+  if(!chk || !initials){ startInterview(); return; }
+  if(!chk.checked || !initials.value.trim()){
+    if(err) err.style.display = 'block';
+    return;
+  }
+  S.answers['intro_consent'] = 'Yes';
+  S.answers['intro_initials'] = initials.value.trim().toUpperCase();
+  S.answers['intro_consent_timestamp'] = new Date().toISOString();
+  startInterview();
 }
 
 function startInterview(){
@@ -736,7 +808,7 @@ function renderAnswer(q){
       g.appendChild(b);
     });
     area.appendChild(g); area.appendChild(backBtn());
-    var dlbl=mk('div','yes-detail-lbl');dlbl.textContent='Please provide more information:';detailBox.appendChild(dlbl);
+    var dlbl=mk('div','yes-detail-lbl');dlbl.textContent=q.detailPrompt||'Please provide more information:';detailBox.appendChild(dlbl);
     var dta=document.createElement('textarea');
     dta.id='yesDetail_'+q.id;
     dta.style.cssText='width:100%;min-height:100px;padding:12px 14px;border-radius:8px;border:2px solid var(--green);background:var(--gpale);font-family:Outfit,sans-serif;font-size:16px;outline:none;resize:vertical;line-height:1.6;display:block;margin-top:6px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;box-sizing:border-box';
@@ -937,7 +1009,7 @@ function renderLabList(area, q, items){
 // ─── renderCardiacList ────────────────────────────────────────────────────────
 // FIX 9: ALL items must be answered before proceeding
 function renderCardiacList(area,q){
-  var cardiacItems=['Stents','Angioplasty','Atrial Fibrillation','Heart Attack','Valve Replacement','Other'];
+  var cardiacItems=['Stents','Angioplasty','Atrial Fibrillation (A-Fib)','Heart Attack','By-Pass Surgery','Valve Replacement','Other'];
   var cardiacAnswers=S.answers[q.id]?JSON.parse(S.answers[q.id]):{};
   var clWrap=mk('div','');clWrap.style.cssText='display:flex;flex-direction:column;gap:12px;margin-bottom:12px';
   cardiacItems.forEach(function(item){
@@ -1359,7 +1431,19 @@ function submitInterview(){
     var pinEl=document.getElementById('clientPin');var pin=(pinEl?pinEl.value:'').trim();
     if(!pin||pin.length!==4){if(errEl){errEl.textContent='Please enter a valid 4-digit PIN.';errEl.style.display='block';}speak('Please enter a 4-digit PIN to protect your PDF.');if(pinEl)pinEl.focus();return;}
     _origPin=pin;
-    if(email){var rx=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;if(!rx.test(email)){if(errEl){errEl.textContent='Please enter a valid email address.';errEl.style.display='block';}speak('Please enter a valid email address.');if(emailEl){emailEl.style.borderColor='var(--red)';emailEl.focus();}return;}}
+    var rx=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!email||!rx.test(email)){
+      if(errEl){
+        errEl.textContent='Please enter a valid email address before submitting.';
+        errEl.style.display='block';
+      }
+      speak('Please enter a valid email address before submitting your questionnaire.');
+      if(emailEl){
+        emailEl.style.borderColor='var(--red)';
+        emailEl.focus();
+      }
+      return;
+    }
   }
   var btn=document.getElementById('submitBtn');if(btn){btn.textContent='Submitting...';btn.disabled=true;}
   function showTY(){
